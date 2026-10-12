@@ -1,0 +1,148 @@
+{
+ "olly_marks": {
+  "from": "S18_1_OLLY"
+ },
+ "olly_go": {
+  "from": "S18_2_OLLY"
+ },
+ "zippy_seeyou": {
+  "from": "S18_3_ZIPPY"
+ },
+ "tomo_steady": {
+  "from": "S20_2_TOMO"
+ },
+ "tomo_strawberries": {
+  "from": "S17_2_TOMO"
+ },
+ "snail_excuse": {
+  "from": "S08_2_SNAIL"
+ },
+ "tomo_sleeping": {
+  "from": "S35_2_TOMO"
+ },
+ "zippy_carrots": {
+  "from": "S26_2_ZIPPY"
+ },
+ "tomo_dreams": {
+  "from": "S36_2_TOMO"
+ },
+ "pippop_gotomo": {
+  "from": "S40_2_PIPPOP"
+ },
+ "narr_cheer": {
+  "from": "S40_3_NARRATOR"
+ },
+ "olly_winner": {
+  "from": "S42_2_OLLY"
+ },
+ "narr_meadow": {
+  "from": "S42_3_NARRATOR"
+ },
+ "zippy_how": {
+  "from": "S43_1_ZIPPY"
+ },
+ "tomo_didnt_stop": {
+  "from": "S43_2_TOMO"
+ },
+ "zippy_champion": {
+  "from": "S44_1_ZIPPY"
+ },
+ "pippop_steady": {
+  "from": "S45_2_PIPPOP"
+ },
+ "narr_sing": {
+  "from": "S13_1_NARRATOR"
+ },
+ "narr_welcome": {
+  "speaker": "NARRATOR",
+  "text": "Welcome to the Big Meadow Race! Zippy and Tomo are waiting at the Big Oak."
+ },
+ "narr_tap_olly": {
+  "speaker": "NARRATOR",
+  "text": "Tap Judge Olly to start the race!"
+ },
+ "narr_hold": {
+  "speaker": "NARRATOR",
+  "text": "Now it's your turn to help Tomo. Press and hold your finger on the screen to make him walk."
+ },
+ "narr_hold_hint": {
+  "speaker": "NARRATOR",
+  "text": "Press and hold, and Tomo will walk!"
+ },
+ "narr_stream": {
+  "speaker": "NARRATOR",
+  "text": "Splish, splash! Here is Giggle Stream."
+ },
+ "snail_luck": {
+  "speaker": "SNAIL",
+  "text": "Good luck, Tomo!"
+ },
+ "narr_shh": {
+  "speaker": "NARRATOR",
+  "text": "Shhh! Zippy is having a nap. Let's tiptoe past, very quietly."
+ },
+ "narr_count": {
+  "speaker": "NARRATOR",
+  "text": "Let's count Tomo's strawberries together!"
+ },
+ "narr_ten": {
+  "speaker": "NARRATOR",
+  "text": "Ten strawberries! What a super picnic!"
+ },
+ "narr_some": {
+  "speaker": "NARRATOR",
+  "text": "Yummy strawberries! Well done!"
+ },
+ "narr_none": {
+  "speaker": "NARRATOR",
+  "text": "Next time, let's find some strawberries!"
+ },
+ "tomo_share": {
+  "speaker": "TOMO",
+  "text": "Strawberries for everyone! Thank you for helping me."
+ },
+ "narr_title": {
+  "speaker": "NARRATOR",
+  "text": "The Big Meadow Race!"
+ },
+ "n1": {
+  "speaker": "NARRATOR",
+  "text": "One!"
+ },
+ "n2": {
+  "speaker": "NARRATOR",
+  "text": "Two!"
+ },
+ "n3": {
+  "speaker": "NARRATOR",
+  "text": "Three!"
+ },
+ "n4": {
+  "speaker": "NARRATOR",
+  "text": "Four!"
+ },
+ "n5": {
+  "speaker": "NARRATOR",
+  "text": "Five!"
+ },
+ "n6": {
+  "speaker": "NARRATOR",
+  "text": "Six!"
+ },
+ "n7": {
+  "speaker": "NARRATOR",
+  "text": "Seven!"
+ },
+ "n8": {
+  "speaker": "NARRATOR",
+  "text": "Eight!"
+ },
+ "n9": {
+  "speaker": "NARRATOR",
+  "text": "Nine!"
+ },
+ "n10": {
+  "speaker": "NARRATOR",
+  "text": "Ten!"
+ }
+}

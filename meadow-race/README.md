@@ -15,11 +15,18 @@ For ages 3–7 on phones and tablets: no reading needed (the narrator speaks), o
 LittleLeap Studios YouTube channel. Kids can't leave the game on their own. No ads, no sign-in, nothing stored.
 
 ## Files
-- `index.html`: the whole game (canvas + Web Audio + the browser's speech voice). Open it from any web server.
+- `index.html`: the whole game (canvas + Web Audio). Open it from any web server.
 - `assets/`: drawings from the cast pose libraries (`_studio/cast/poses/<CHAR>/poses`) and EP01 background plates
   (`_studio/library/places/meadow-ep01`), resized for the web.
 
 To try it locally: `cd meadow-race && python3 -m http.server`, then open http://localhost:8000.
+
+## Voices
+`voices/` holds the cast's own voices. 18 lines are taken straight from the EP01 recordings, like Olly's
+"On your marks... get set... Go!", Zippy's "I'm the fastest... carrots..." and Pip and Pop's "Slow and steady!".
+The other 23 lines are new game lines, such as instructions and the counting, made with the studio's Kokoro settings
+for each character from `cast.json`. Re-run `python3 make_voices.py` on the Mac after changing lines;
+`voices/lines.json` lists every line and where it came from.
 
 ## Changing it
 - Channel link: `CHANNEL_URL` near the top of the script.

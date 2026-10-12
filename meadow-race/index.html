@@ -306,31 +306,72 @@ function startMusic() {
 }
 function musicLevel(v) { if (musicGain) musicGain.gain.setTargetAtTime(v, actx.currentTime, 0.4); }
 
-// narrator: the browser's own voice, warm and a little slow
-let voice = null;
-function pickVoice() {
-  const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
-  const pref = ["Samantha", "Karen", "Moira", "Tessa", "Google UK English Female", "Google US English", "Female"];
-  voice = pref.map(p => vs.find(v => v.name.includes(p))).find(Boolean) || vs[0] || null;
+// Voices: the cast's own recordings. Lines marked EP01 come straight from the movie; the others were
+// made with the studio's Kokoro settings for each character (see voices/lines.json).
+const LINES = {
+  narr_title: "The Big Meadow Race!",
+  narr_welcome: "Welcome to the Big Meadow Race! Zippy and Tomo are waiting at the Big Oak.",
+  narr_tap_olly: "Tap Judge Olly to start the race!",
+  olly_marks: "Runners, to the start line! On your marks... get set...",            // EP01
+  olly_go: "Go!",                                                                     // EP01
+  zippy_seeyou: "Wheeeee! See you never, Tomo!",                                      // EP01
+  tomo_steady: "Slow and steady, Tomo. Slow and steady.",                             // EP01
+  narr_hold: "Now it's your turn to help Tomo. Press and hold your finger on the screen to make him walk.",
+  narr_hold_hint: "Press and hold, and Tomo will walk!",
+  tomo_strawberries: "Ooh. Strawberries.",                                            // EP01
+  snail_excuse: "Excuse me... coming through...",                                     // EP01
+  snail_luck: "Good luck, Tomo!",
+  narr_stream: "Splish, splash! Here is Giggle Stream.",
+  tomo_sleeping: "Is that... Zippy? Sleeping?",                                       // EP01
+  zippy_carrots: "I'm the fastest... carrots...",                                     // EP01
+  narr_shh: "Shhh! Zippy is having a nap. Let's tiptoe past, very quietly.",
+  tomo_dreams: "Sweet dreams, Zippy. See you at the finish!",                         // EP01
+  pippop_gotomo: "It's Tomo! Go, Tomo, go!",                                          // EP01
+  narr_cheer: "Can you cheer too? Go, Tomo, go! Go, Tomo, go!",                       // EP01
+  olly_winner: "The winner is... Tomo the Tortoise!",                                 // EP01
+  narr_meadow: "The whole meadow cheered!",                                           // EP01
+  zippy_how: "Tomo... you won! But... how?",                                          // EP01
+  tomo_didnt_stop: "I just didn't stop, Zippy. You're still the fastest. But even fast friends need to keep going.", // EP01
+  zippy_champion: "And maybe... stop showing off. A little bit. Well done, Tomo. You're a real champion.",            // EP01
+  pippop_steady: "Slow and steady! Slow and steady!",                                 // EP01
+  narr_sing: "Can you sing it with them? Slow... and... steady! One more time: slow and steady!",                     // EP01
+  narr_count: "Let's count Tomo's strawberries together!",
+  narr_ten: "Ten strawberries! What a super picnic!",
+  narr_some: "Yummy strawberries! Well done!",
+  narr_none: "Next time, let's find some strawberries!",
+  tomo_share: "Strawberries for everyone! Thank you for helping me.",
+  n1: "One!", n2: "Two!", n3: "Three!", n4: "Four!", n5: "Five!", n6: "Six!", n7: "Seven!", n8: "Eight!", n9: "Nine!", n10: "Ten!",
+};
+const voiceData = {}, voiceBuf = {};
+for (const id in LINES) fetch(`voices/${id}.mp3`).then(r => r.ok ? r.arrayBuffer() : null).then(b => { if (b) voiceData[id] = b; }).catch(() => {});
+async function decodeVoices() {
+  const a = audio(); if (!a) return;
+  await Promise.all(Object.keys(voiceData).map(id => voiceBuf[id] ? null :
+    new Promise(res => a.decodeAudioData(voiceData[id].slice(0), b => { voiceBuf[id] = b; res(); }, () => res()))));
 }
-if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-let speaking = false;
-function say(text, { rate = 0.92, pitch = 1.1 } = {}) {
+let speaking = false, currentVoice = null;
+function stopVoice() { try { currentVoice?.stop(); } catch (e) {} currentVoice = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+// Plays one line and resolves when it ends. Falls back to the device voice if a recording is missing.
+function say(id) {
+  const text = LINES[id] || id;
   return new Promise(res => {
-    const fallback = 700 + text.length * 62;
-    if (!soundOn || !("speechSynthesis" in window)) { setTimeout(res, soundOn ? fallback : fallback * 0.7); return; }
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    if (voice) u.voice = voice;
-    u.rate = rate; u.pitch = pitch; u.lang = voice?.lang || "en-US";
     let done = false; const fin = () => { if (!done) { done = true; speaking = false; musicLevel(0.05); res(); } };
-    u.onend = fin; u.onerror = fin;
-    setTimeout(fin, fallback * 2 + 1500);   // safety: some browsers never fire onend
-    speaking = true; musicLevel(0.025);
+    if (!soundOn) { setTimeout(fin, 500 + text.length * 45); return; }
+    stopVoice(); speaking = true; musicLevel(0.02);
+    const a = audio(), buf = voiceBuf[id];
+    if (a && buf) {
+      const src = a.createBufferSource(); src.buffer = buf; src.connect(master);
+      src.onended = fin; src.start(); currentVoice = src;
+      setTimeout(fin, buf.duration * 1000 + 1500);
+      return;
+    }
+    if (!("speechSynthesis" in window)) { setTimeout(fin, 700 + text.length * 62); return; }
+    const u = new SpeechSynthesisUtterance(text); u.rate = 0.92; u.onend = fin; u.onerror = fin;
+    setTimeout(fin, 2000 + text.length * 130);
     speechSynthesis.speak(u);
   });
 }
-function sayIfQuiet(text) { if (!speaking) say(text, { rate: 1 }); }
+function sayIfQuiet(id) { if (!speaking) say(id); }
 
 /* ---------- game state ---------- */
 const state = {
@@ -376,53 +417,62 @@ async function play() {
   ui("game");
   try {
     /* 1. Big Oak start line */
+    await decodeVoices();
     await fadeTo("S14", gen);
     state.tomo = actor({ name: "tomo_stand", x: W * 0.2, y: TOMO_Y(), z: 2 });
     const zippy = actor({ name: "zippy_side", x: W * 0.36, y: H - 70, z: 1 });
     const olly = actor({ name: "olly_stand", x: Math.min(W * 0.82, bx(0.84)), y: H - 40, z: 0, tappable: true });
-    await say("Welcome to the Big Meadow Race!"); alive(gen);
-    await say("Zippy the hare and Tomo the tortoise are at the start line."); alive(gen);
-    await say("Tap Judge Olly to start the race!"); alive(gen);
+    await say("narr_welcome"); alive(gen);
+    await say("narr_tap_olly"); alive(gen);
     await waitForTap(olly, gen);
-    olly.name = "olly_whistle"; sfx.whistle(); olly.t = 0; olly.bounce = 1;
-    await sleep(500); alive(gen);
-    await say("Ready, steady, go!", { rate: 1.05, pitch: 1.2 }); alive(gen);
+    olly.bounce = 1;
+    await say("olly_marks"); alive(gen);
+    olly.name = "olly_whistle"; sfx.whistle(); olly.bounce = 1;
+    await sleep(650); alive(gen);
+    say("olly_go");
+    await sleep(400); alive(gen);
     zippy.name = "zippy_run"; sfx.zoom();
+    say("zippy_seeyou");
     await runTo(zippy, W + 220, 1150, gen); alive(gen);
     olly.name = "olly_stand";
-    await say("Whoosh! Zippy is super fast."); alive(gen);
-    await say("Now help Tomo. Press and hold your finger on the screen to walk."); alive(gen);
+    await sleep(600); alive(gen);
+    await say("tomo_steady"); alive(gen);
+    await say("narr_hold"); alive(gen);
     await walkUntil(W + 140, gen); alive(gen);
 
     /* 2. Flower path: first strawberries */
     await fadeTo("S07", gen); state.tomo.x = -140; state.actors.push(state.tomo);
     addBerries([0.3, 0.48, 0.66, 0.84], TOMO_Y() - 150);
-    sayIfQuiet("Look, strawberries! Tomo loves strawberries.");
+    sayIfQuiet("tomo_strawberries");
     await walkUntil(W + 140, gen); alive(gen);
 
     /* 3. Mushroom Woods: Snail says hello */
     await fadeTo("S21", gen); state.tomo.x = -140; state.actors.push(state.tomo);
     const snail = actor({ name: "snail_happy", x: W * 0.6, y: H - 120, z: 0, flip: true });
     addBerries([0.28, 0.45, 0.8], TOMO_Y() - 150);
+    sayIfQuiet("snail_excuse");
     await walkUntil(W + 140, gen, { triggers: [
-      { x: W * 0.34, run: () => { snail.bounce = 1; say("Hello, Snail! Snail says: good luck, Tomo!"); } },
+      { x: W * 0.36, run: () => { snail.bounce = 1; say("snail_luck"); } },
     ] }); alive(gen);
 
     /* 4. Giggle Stream */
     await fadeTo("S23", gen); state.tomo.x = -140; state.actors.push(state.tomo);
     addBerries([0.32, 0.55, 0.78], TOMO_Y() - 150);
-    sayIfQuiet("Splish, splash! The Giggle Stream.");
+    sayIfQuiet("narr_stream");
     await walkUntil(W + 140, gen); alive(gen);
 
     /* 5. Sunflower Hill: Zippy is napping, tiptoe past */
     await fadeTo("S24", gen); state.tomo.x = -140; state.actors.push(state.tomo);
     const napper = actor({ name: "zippy_sleep", x: W * 0.7, y: H - 88, z: 0, zzz: true });
     musicLevel(0.02);
-    await say("Oh look! Zippy is taking a nap."); alive(gen);
-    await say("Shhh. Tiptoe quietly past him."); alive(gen);
+    state.tomo.x = W * 0.12; state.tomo.name = "tomo_stand";
+    await say("tomo_sleeping"); alive(gen);
+    napper.bounce = 0.4;
+    await say("zippy_carrots"); alive(gen);
+    await say("narr_shh"); alive(gen);
     state.quiet = true;
     await walkUntil(W + 140, gen, { speed: 170, triggers: [
-      { x: W * 0.72, run: () => say("Tiptoe, tiptoe. Well done!", { rate: 0.85, pitch: 1.0 }) },
+      { x: W * 0.78, run: () => say("tomo_dreams") },
     ] }); alive(gen);
     state.quiet = false;
 
@@ -433,42 +483,40 @@ async function play() {
     const finishOlly = actor({ name: "olly_stand", x: W * 0.5, y: H - 112, z: 0 });
     const pip = actor({ name: "pip_clap", x: W * 0.83, y: H - 70, z: 1, flip: true, clap: true });
     const pop = actor({ name: "pop_clap", x: W * 0.94, y: H - 92, z: 0, flip: true, clap: true });
-    sayIfQuiet("There is the finish line! Keep going, Tomo!");
+    say("pippop_gotomo").then(() => { if (state.walk && gen === state.gen) say("narr_cheer"); });
     await walkUntil(ribbonX - 40, gen); alive(gen);
     state.walking = false;
     state.ribbon.broken = 0.01; sfx.ribbon();
     finishOlly.name = "olly_whistle"; sfx.whistle();
     state.tomo.name = "tomo_cheer"; state.tomo.bounce = 1;
     confetti(); sfx.win();
-    await say("Hooray! Tomo wins the Big Meadow Race!", { rate: 0.95, pitch: 1.2 }); alive(gen);
+    await sleep(700); alive(gen);
+    await say("olly_winner"); alive(gen);
+    await say("narr_meadow"); alive(gen);
     finishOlly.name = "olly_happy";
     const late = actor({ name: "zippy_run", x: -200, y: H - 80, z: 1 });
     sfx.zoom();
     await runTo(late, W * 0.3, 1000, gen); alive(gen);
     late.name = "zippy_surprised"; late.bounce = 1;
-    await say("Here comes Zippy. Oh! He had a long nap."); alive(gen);
+    await say("zippy_how"); alive(gen);
+    state.tomo.name = "tomo_happy";
+    await say("tomo_didnt_stop"); alive(gen);
     late.name = "zippy_clap"; late.clap = true;
-    await say("Zippy says: well done, Tomo!"); alive(gen);
-    await say("Say it with me!"); alive(gen);
-    await say("Slow and steady wins the race!", { rate: 0.85, pitch: 1.15 }); alive(gen);
-    await sleep(300); alive(gen);
-    await say("One more time!"); alive(gen);
-    await say("Slow and steady wins the race!", { rate: 0.85, pitch: 1.15 }); alive(gen);
+    await say("zippy_champion"); alive(gen);
+    await say("pippop_steady"); alive(gen);
+    await say("narr_sing"); alive(gen);
 
     /* 7. Count the strawberries together */
     state.summary = { shown: 0, n: state.collected };
-    await say(`Let's count Tomo's strawberries!`); alive(gen);
-    const words = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+    await say("narr_count"); alive(gen);
     for (let i = 0; i < state.collected; i++) {
       state.summary.shown = i + 1; sfx.count(i);
-      await say(words[i] + "!", { rate: 1, pitch: 1.2 }); alive(gen);
-      await sleep(150);
+      await say("n" + (i + 1)); alive(gen);
+      await sleep(250);
     }
     state.tomo.name = "tomo_happy";
-    if (state.collected === 10) await say("Ten strawberries! A super strawberry picnic for everyone!");
-    else if (state.collected > 0) await say(`${words[state.collected - 1]} strawberries! Yummy!`);
-    else await say("Next time, let's find some strawberries!");
-    alive(gen);
+    await say(state.collected === 10 ? "narr_ten" : state.collected > 0 ? "narr_some" : "narr_none"); alive(gen);
+    if (state.collected > 0) { state.tomo.bounce = 1; await say("tomo_share"); alive(gen); }
     confetti();
     ui("end");
   } catch (e) { if (e !== "stop") console.error(e); }
@@ -513,7 +561,7 @@ function update(dt) {
   state.hint = null;
   if (state.walk && state.idle > 2.5) state.hint = { x: W / 2, y: H * 0.62 };
   if (state.tapTarget && state.idle > 2.5) { const a = state.tapTarget.a; state.hint = { x: a.x, y: a.y - spriteSize(a.name).h * 0.55 }; }
-  if (state.walk && Math.abs(state.idle - 9) < dt) sayIfQuiet("Press and hold to help Tomo walk!");
+  if (state.walk && Math.abs(state.idle - 9) < dt) sayIfQuiet("narr_hold_hint");
 
   // strawberries
   for (const b of state.berries) {
@@ -521,8 +569,7 @@ function update(dt) {
     if (!b.got && tomo && Math.abs(tomo.x + 70 - b.x) < 70) {
       b.got = true; state.collected++; sfx.berry();
       for (let i = 0; i < 10; i++) state.fx.push({ kind: "spark", x: b.x, y: b.y, vx: Math.cos(i) * 260, vy: Math.sin(i) * 260 - 80, life: 0.6 });
-      const words = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
-      sayIfQuiet(words[state.collected - 1] + "!");
+      sayIfQuiet("n" + state.collected);
     }
     if (b.got) b.pop += dt;
   }
@@ -706,7 +753,7 @@ function ui(mode) {
 function toTitle() {
   state.gen++; state.mode = "title"; state.walk = null; state.tapTarget = null; state.summary = null;
   state.bg = "S03"; state.actors = []; state.berries = []; state.fx = []; state.ribbon = null; state.tomo = null; state.fade = 0;
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  stopVoice();
   ui("title");
 }
 const press = (el, fn) => el.addEventListener("click", e => { e.preventDefault(); fn(); });
@@ -718,7 +765,7 @@ press($("homeBtn"), () => { sfx.tap(); toTitle(); });
 press($("soundBtn"), () => {
   soundOn = !soundOn; $("soundBtn").textContent = soundOn ? "🔊" : "🔇";
   if (master) master.gain.value = soundOn ? 1 : 0;
-  if (!soundOn && "speechSynthesis" in window) speechSynthesis.cancel();
+  if (!soundOn) stopVoice();
 });
 $("rotate").addEventListener("pointerdown", () => { rotateDismissed = true; $("rotate").hidden = true; });
 
