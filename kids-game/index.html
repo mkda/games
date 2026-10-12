@@ -42,6 +42,7 @@
     box-shadow: 0 10px 0 rgba(0,0,0,.15); color: #fff;
   }
   .menu button:active { transform: translateY(6px); box-shadow: 0 4px 0 rgba(0,0,0,.15); }
+  .menu .b4 { background: #ff5a5a; }
   .menu .b1 { background: #ff8fab; } .menu .b2 { background: #8f7bff; } .menu .b3 { background: #ffb547; }
 
   /* balloons */
@@ -72,6 +73,31 @@
   .choice.wrong { animation: shake .4s; }
   .choice.right { background: #d8ffe7; }
 
+  /* grown-ups gate */
+  #gate { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(38,50,71,.6); z-index: 30; padding: 16px; }
+  #gate.on { display: flex; }
+  .gate-box { background: #fff; border-radius: 28px; padding: 20px; width: min(380px, 100%); text-align: center; font-family: system-ui, sans-serif; }
+  .gate-box h2 { margin: 0 0 4px; font-size: 22px; }
+  .gate-box p { margin: 0 0 12px; color: #55607a; }
+  #gateQ { font-size: 34px; font-weight: 700; margin-bottom: 8px; }
+  #gateA { font-size: 34px; min-height: 48px; border-bottom: 3px solid #d7deea; margin: 0 auto 12px; width: 120px; letter-spacing: 4px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pad button { height: 56px; font-size: 26px; border: none; border-radius: 14px; background: #eef2f8; color: var(--ink); cursor: pointer; }
+  .pad .ok { background: var(--good); color: #fff; }
+  #gate.bad .gate-box { animation: shake .4s; }
+
+  /* videos (grown-ups area) */
+  #videos { overflow-y: auto; touch-action: pan-y; }
+  #videos h2 { color: #fff; margin: 4px 0 12px; text-shadow: 0 3px 0 rgba(0,0,0,.15); font-size: 28px; text-align: center; }
+  #videoList { width: min(900px, 100%); display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; padding-bottom: 16px; }
+  .vtile { display: block; background: #fff; border-radius: 22px; overflow: hidden; text-decoration: none; color: var(--ink); box-shadow: 0 6px 0 rgba(0,0,0,.12); }
+  .vtile .thumb { aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative; }
+  .vtile .thumb img.t { width: 100%; height: 100%; object-fit: cover; }
+  .vtile .thumb .face { width: 45%; height: 80%; }
+  .vtile .thumb .play { position: absolute; right: 10px; bottom: 8px; font-size: 36px; }
+  .vtile .cap { padding: 10px 14px; font-size: 18px; font-family: system-ui, sans-serif; }
+  .chan-btn { display: inline-flex; align-items: center; gap: 10px; background: #ff0033; color: #fff; text-decoration: none; font: 700 20px system-ui, sans-serif; padding: 14px 22px; border-radius: 40px; margin-bottom: 16px; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+
   /* celebration */
   #party { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; background: rgba(255,255,255,.55); z-index: 20; }
   #party.on { display: flex; }
@@ -99,6 +125,7 @@
     <button class="b1" data-go="balloons" aria-label="Balloon pop">🎈</button>
     <button class="b2" data-go="memory" aria-label="Memory match">🃏</button>
     <button class="b3" data-go="find" aria-label="Find the friend">🔍</button>
+    <button class="b4" id="tvBtn" aria-label="Watch our videos (grown-ups)">📺</button>
   </div>
 </section>
 
@@ -121,6 +148,25 @@
   <div id="findChoices"></div>
 </section>
 
+<!-- VIDEOS (behind the grown-ups gate) -->
+<section id="videos" class="screen">
+  <div class="bar"><button class="round-btn" data-home aria-label="Home">🏠</button><span></span></div>
+  <h2 id="chanName"></h2>
+  <a class="chan-btn" id="chanLink" target="_blank" rel="noopener">▶ Open the YouTube channel</a>
+  <div id="videoList"></div>
+</section>
+
+<div id="gate" role="dialog" aria-label="Grown-ups only">
+  <div class="gate-box">
+    <h2>Grown-ups only</h2>
+    <p>This opens YouTube. Answer to continue.</p>
+    <div id="gateQ"></div>
+    <div id="gateA"></div>
+    <div class="pad" id="pad"></div>
+    <button class="round-btn" id="gateClose" aria-label="Close" style="margin-top:12px;width:56px;height:56px;font-size:26px">✖️</button>
+  </div>
+</div>
+
 <div id="party"><div class="big">🏆</div></div>
 
 <script>
@@ -140,6 +186,22 @@ const CHARACTERS = [
   { name: "Nova",  color: "#9b7bff", image: null },
   { name: "Bolt",  color: "#ff6b5e", image: null },
 ];
+
+/* =========================================================
+   YOUTUBE CHANNEL: links the game to the AI Kids videos.
+   - url:    the channel link
+   - videos: YouTube video ids (the part after "watch?v=") and
+             which character stars in them (index in CHARACTERS).
+   The video corner sits behind a grown-ups question, as
+   recommended for apps aimed at children.
+   ========================================================= */
+const CHANNEL = {
+  name: "AI Kids on YouTube",
+  url: "https://www.youtube.com/@YOUR_CHANNEL",
+  videos: [
+    // { id: "dQw4w9WgXcQ", title: "Robo learns to dance", character: 0 },
+  ],
+};
 
 /* ---------- character art ---------- */
 function placeholderSVG(c, i) {
@@ -353,6 +415,46 @@ function pick(b) {
   }
 }
 onTap($("#findTarget"), () => say("Find " + CHARACTERS[fTarget].name + "!"));
+
+/* =========================================================
+   GROWN-UPS GATE + VIDEO CORNER
+   ========================================================= */
+let gateAnswer = 0, gateTyped = "";
+function openGate() {
+  const a = 6 + Math.floor(Math.random() * 4), b = 3 + Math.floor(Math.random() * 7);
+  gateAnswer = a * b; gateTyped = "";
+  $("#gateQ").textContent = `${a} × ${b} = ?`; $("#gateA").textContent = "";
+  $("#gate").classList.add("on");
+}
+$("#pad").innerHTML = [1,2,3,4,5,6,7,8,9,"⌫",0,"✓"].map(k => `<button class="${k === "✓" ? "ok" : ""}" data-k="${k}">${k}</button>`).join("");
+$("#pad").querySelectorAll("button").forEach(b => onTap(b, () => {
+  const k = b.dataset.k;
+  if (k === "⌫") gateTyped = gateTyped.slice(0, -1);
+  else if (k === "✓") {
+    if (+gateTyped === gateAnswer) { $("#gate").classList.remove("on"); show("videos"); return; }
+    $("#gate").classList.remove("bad"); void $("#gate").offsetWidth; $("#gate").classList.add("bad");
+    sfx.no(); openGate(); return;
+  } else if (gateTyped.length < 3) gateTyped += k;
+  $("#gateA").textContent = gateTyped;
+}));
+onTap($("#gateClose"), () => $("#gate").classList.remove("on"));
+onTap($("#tvBtn"), () => { sfx.flip(); openGate(); });
+
+function renderVideos() {
+  $("#chanName").textContent = CHANNEL.name;
+  $("#chanLink").href = CHANNEL.url;
+  $("#videoList").innerHTML = CHANNEL.videos.map(v => {
+    const i = v.character ?? 0, c = CHARACTERS[i] || CHARACTERS[0];
+    return `<a class="vtile" href="https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}" target="_blank" rel="noopener">
+      <div class="thumb" style="background:${c.color}">
+        <img class="t" src="https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/hqdefault.jpg" alt="" onerror="this.replaceWith(document.createRange().createContextualFragment(faceHTML(${i})))">
+        <span class="play">▶️</span>
+      </div>
+      <div class="cap">${(v.title || c.name).replace(/</g, "&lt;")}</div>
+    </a>`;
+  }).join("");
+}
+renderVideos();
 
 window.addEventListener("resize", () => { if (current === "memory") layoutMemory(); });
 </script>

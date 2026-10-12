@@ -34,6 +34,10 @@ GAMES (a home screen with three huge picture buttons, plus a home button on ever
 3. Find the Friend: the game says "Find Luna!" and shows 4 characters. Tap the right one to earn a star.
    Tapping the big picture at the top repeats the name. 8 stars = confetti party.
 
+4. Video corner (📺 button): links to our YouTube channel <PASTE CHANNEL URL> and a grid of our videos
+   (thumbnail + title, opening on YouTube). Put it behind a "grown-ups only" gate: a random multiplication
+   sum (e.g. 7 × 8) answered on a number pad, so kids can't leave the game on their own.
+
 On the home screen show all characters; tapping one makes them say "Hi! I'm <name>".
 Put the character list in one array at the top of the code so I can add more characters easily.
 Single page, no backend, no login.

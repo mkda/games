@@ -18,6 +18,13 @@ instructions are spoken aloud, buttons are pictures, and there's no way to lose.
    ```
    `name` is what the game says out loud; `color` tints balloons. With `image: null` a placeholder face is drawn.
 
+## Linking the YouTube channel
+The 📺 button on the home screen opens a video corner with links to the AI Kids YouTube channel and videos.
+It sits behind a grown-ups question (a multiplication sum), so kids can't leave the game for YouTube on their own.
+Fill in the `CHANNEL` block near the top of the `<script>`: the channel `url` and a list of `videos`
+(`id` is the part after `watch?v=`, `character` is which character stars in it).
+Mark the channel's videos as "made for kids" in YouTube Studio; the game itself collects no data and has no ads.
+
 ## Google Labs playground
 See [GOOGLE_LABS_PROMPT.md](GOOGLE_LABS_PROMPT.md) for a ready-to-paste prompt that builds the same game
 in Google AI Studio / Gemini, so you can keep iterating there.
