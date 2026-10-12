@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#bfe6f5">
+<title>Meadow Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+  /* The LittleLeap games collection: one big picture tile per game, nothing to read for kids. */
+  :root { --ink: #5a3b26; --cream: #fff8ec; --font: "Fredoka", "Chalkboard SE", "Comic Sans MS", system-ui, sans-serif; color-scheme: light; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: var(--font); color: var(--ink); min-height: 100vh;
+    background: #bfe6f5 url("memory/assets/bg.jpg") center bottom / cover no-repeat fixed;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  }
+  .logo { width: min(320px, 62vw); }
+  h1 { margin: 0; font-size: clamp(40px, 8vmin, 84px); line-height: 1; text-align: center;
+       color: var(--cream); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 6px 0 rgba(90,59,38,.35); }
+  .games { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; width: 100%; max-width: 900px; }
+  .game {
+    position: relative; flex: 1 1 280px; max-width: 400px; aspect-ratio: 4 / 3; border-radius: 28px; overflow: hidden;
+    border: 5px solid var(--ink); box-shadow: 0 8px 0 rgba(90,59,38,.35); text-decoration: none; color: var(--ink);
+    background: var(--cream) center / cover no-repeat; transition: transform .15s;
+  }
+  .game:active { transform: translateY(4px) scale(.98); box-shadow: 0 4px 0 rgba(90,59,38,.35); }
+  .game:focus-visible { outline: 5px solid #2f80ed; outline-offset: 4px; }
+  .game img { position: absolute; bottom: 18%; height: 62%; filter: drop-shadow(0 4px 2px rgba(0,0,0,.2)); }
+  .game span { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 8px 12px; background: var(--cream);
+               border-top: 4px solid var(--ink); font-size: clamp(20px, 3.4vmin, 28px); font-weight: 700; text-align: center; }
+  .race { background-image: url("meadow-race/assets/bg_S07.jpg"); }
+  .memory { background-image: url("memory/assets/bg.jpg"); }
+  .note { margin: 6px 0 0; font-size: 14px; text-align: center; background: rgba(255,248,236,.8); padding: 4px 12px; border-radius: 12px; }
+</style>
+</head>
+<body>
+  <img class="logo" src="memory/assets/logo.webp" alt="LittleLeap Studios">
+  <h1>Meadow Games</h1>
+  <main class="games">
+    <a class="game race" href="meadow-race/index.html">
+      <img src="meadow-race/assets/tomo_walk_1.webp" alt="" style="left:12%">
+      <img src="meadow-race/assets/zippy_run_1.webp" alt="" style="right:10%">
+      <span>The Big Meadow Race</span>
+    </a>
+    <a class="game memory" href="memory/index.html">
+      <img src="memory/assets/pip.webp" alt="" style="left:10%;height:52%">
+      <img src="memory/assets/olly.webp" alt="" style="left:35%">
+      <img src="memory/assets/pop.webp" alt="" style="right:10%;height:52%">
+      <span>Meadow Memory</span>
+    </a>
+  </main>
+  <p class="note">Made for kids by LittleLeap Studios. No ads, nothing collected.</p>
+</body>
+</html>

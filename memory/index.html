@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#bfe6f5">
+<title>Meadow Memory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+  /* A meadow table of picture cards. Card backs carry the LittleLeap sprout; faces show one friend, tinted in
+     that friend's signature colour, with their name underneath. */
+  :root {
+    --ink: #5a3b26;          /* warm-brown outline of the drawings */
+    --cream: #fff8ec;
+    --paper: #fffdf7;
+    --back: #f7b267;         /* sprout orange, the card back */
+    --back2: #f59f4c;
+    --leaf: #6bbf59;
+    --scarf: #d94a3d;
+    --font: "Fredoka", "Baloo 2", "Chalkboard SE", "Comic Sans MS", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; touch-action: manipulation; }
+  body {
+    font-family: var(--font); color: var(--ink);
+    background: #bfe6f5 url("assets/bg.jpg") center bottom / cover no-repeat;
+  }
+  body::before { content: ""; position: fixed; inset: 0; background: rgba(255, 248, 236, .28); pointer-events: none; }
+
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+
+  .icon {
+    position: fixed; z-index: 6; width: 64px; height: 64px; border-radius: 50%; border: 4px solid var(--ink); background: var(--cream);
+    font-size: 30px; line-height: 1; display: grid; place-items: center; cursor: pointer; padding: 0; color: var(--ink);
+    box-shadow: 0 5px 0 rgba(90,59,38,.35);
+  }
+  .icon:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(90,59,38,.35); }
+  button:focus-visible { outline: 4px solid #2f80ed; outline-offset: 3px; }
+  #homeBtn { top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); }
+  #soundBtn { top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); }
+  #parentBtn { bottom: max(14px, env(safe-area-inset-bottom)); right: max(14px, env(safe-area-inset-right)); width: 52px; height: 52px; font-size: 24px; }
+
+  /* title */
+  #title .logo { width: min(340px, 60vw); filter: drop-shadow(0 4px 0 rgba(255,255,255,.6)); }
+  #title h1 {
+    margin: 4px 0 10px; font-size: clamp(44px, 9vmin, 96px); font-weight: 700; line-height: 1; text-wrap: balance; text-align: center;
+    color: var(--cream); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 6px 0 rgba(90,59,38,.35);
+  }
+  .parade { display: flex; justify-content: center; align-items: flex-end; flex-wrap: wrap; gap: 2px 4px; max-width: min(1100px, 100%); margin-bottom: 18px; }
+  .parade button { border: none; background: none; padding: 0; cursor: pointer; height: clamp(54px, 11vmin, 110px); }
+  .parade img { height: 100%; width: auto; display: block; animation: bob 2.4s ease-in-out infinite; }
+  .parade button:nth-child(3n+1) img { animation-delay: .3s; } .parade button:nth-child(3n+2) img { animation-delay: .8s; }
+  .big {
+    width: clamp(110px, 17vmin, 150px); height: clamp(110px, 17vmin, 150px); border-radius: 50%; border: 6px solid var(--ink);
+    background: var(--scarf); color: #fff; cursor: pointer; padding: 0; display: grid; place-items: center;
+    box-shadow: 0 8px 0 rgba(90,59,38,.4); animation: pulse 1.4s ease-in-out infinite;
+  }
+  .big svg { width: 52%; height: 52%; }
+  .big:disabled { background: #e8d9c4; animation: none; }
+
+  /* level picker: three trays of little cards */
+  #levels .row { display: flex; gap: clamp(14px, 3vw, 36px); flex-wrap: wrap; justify-content: center; }
+  .lvl {
+    border: 5px solid var(--ink); background: var(--cream); border-radius: 28px; padding: 18px; cursor: pointer;
+    box-shadow: 0 8px 0 rgba(90,59,38,.35); display: grid; gap: 7px; align-content: center; justify-content: center;
+    width: clamp(150px, 26vmin, 230px); aspect-ratio: 1;
+  }
+  .lvl:active { transform: translateY(4px); box-shadow: 0 4px 0 rgba(90,59,38,.35); }
+  .lvl i { display: block; width: clamp(22px, 4vmin, 34px); aspect-ratio: 3/4; border-radius: 6px; background: var(--back); border: 3px solid var(--ink); }
+  .lvl:nth-child(1) { grid-template-columns: repeat(3, auto); }
+  .lvl:nth-child(2) { grid-template-columns: repeat(4, auto); }
+  .lvl:nth-child(3) { grid-template-columns: repeat(4, auto); }
+
+  /* board */
+  #board { display: grid; gap: var(--gap, 12px); }
+  .card { position: relative; width: var(--cw); height: var(--ch); perspective: 900px; cursor: pointer; border: none; padding: 0; background: none; }
+  .card .in { position: absolute; inset: 0; transition: transform .38s cubic-bezier(.3,1.4,.6,1); transform-style: preserve-3d; }
+  .card.up .in { transform: rotateY(180deg); }
+  .card .face, .card .backside {
+    position: absolute; inset: 0; border-radius: 18px; border: 4px solid var(--ink); backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    box-shadow: 0 6px 0 rgba(90,59,38,.3); overflow: hidden;
+  }
+  .card .backside {
+    background:
+      radial-gradient(circle at 50% 46%, rgba(255,255,255,.35) 0 34%, transparent 35%),
+      repeating-linear-gradient(45deg, var(--back) 0 14px, var(--back2) 14px 28px);
+    display: grid; place-items: center;
+  }
+  .card .backside img { width: 58%; height: auto; }
+  .card .face { transform: rotateY(180deg); background: var(--paper); display: flex; flex-direction: column; }
+  .card .pic { position: relative; flex: 1; min-height: 0; background: radial-gradient(circle at 50% 60%, var(--tint) 0 55%, transparent 56%); }
+  .card .pic img { position: absolute; left: 8%; top: 7%; width: 84%; height: 90%; object-fit: contain; }
+  .card .name { font-weight: 700; font-size: var(--fs, 20px); text-align: center; padding: 2px 4px 6%; line-height: 1.05; white-space: nowrap; }
+  .card.done .face { box-shadow: 0 0 0 5px #ffd84d, 0 6px 0 rgba(90,59,38,.3); }
+  .card.done .pic img { animation: hop .6s ease; }
+  .card.dance .pic img { animation: dance 0.9s ease-in-out infinite; }
+  .card.nope .in { animation: wiggle .4s ease; }
+
+  #endRow { position: fixed; z-index: 6; inset: 0; display: flex; align-items: center; justify-content: center; gap: 28px; background: rgba(255,248,236,.55); }
+  #againBtn { background: var(--leaf); }
+  #moreBtn { background: #2f80ed; }
+
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+
+  /* grown-ups */
+  .sheet { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(90,59,38,.45); }
+  .cardbox { background: var(--cream); border: 4px solid var(--ink); border-radius: 28px; padding: 20px; width: min(400px, 100%); max-height: 100%; overflow-y: auto; text-align: center; }
+  .cardbox h2 { margin: 0 0 4px; font-size: 24px; }
+  .cardbox p { margin: 0 0 12px; font: 400 15px/1.45 system-ui, sans-serif; color: #7a5a44; }
+  #gateQ { font-size: 34px; font-weight: 700; }
+  #gateA { font-size: 34px; min-height: 48px; border-bottom: 3px solid #e2cdb3; width: 120px; margin: 4px auto 12px; letter-spacing: 4px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pad button { height: 54px; font: 600 24px var(--font); border: none; border-radius: 14px; background: #f1e3cf; color: var(--ink); cursor: pointer; }
+  .pad .ok { background: var(--leaf); color: #fff; }
+  .shake { animation: wiggle .4s; }
+  .yt { display: flex; align-items: center; justify-content: center; gap: 10px; background: #ff0033; color: #fff; text-decoration: none;
+        font: 600 19px var(--font); padding: 14px 18px; border-radius: 40px; margin: 6px 0 12px; box-shadow: 0 5px 0 rgba(0,0,0,.18); }
+  .close { position: static; margin: 12px auto 0; }
+
+  @keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  @keyframes hop { 0%,100% { transform: translateY(0) scale(1) } 40% { transform: translateY(-14%) scale(1.08) } }
+  @keyframes dance { 0%,100% { transform: rotate(-6deg) translateY(0) } 50% { transform: rotate(6deg) translateY(-8%) } }
+  @keyframes wiggle { 0%,100% { translate: 0 } 25% { translate: -8px } 75% { translate: 8px } }
+  @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<button class="icon" id="homeBtn" aria-label="Back" hidden>🏠</button>
+<button class="icon" id="soundBtn" aria-label="Sound on or off">🔊</button>
+<button class="icon" id="parentBtn" aria-label="For grown-ups">📺</button>
+
+<section class="screen" id="title">
+  <img class="logo" src="assets/logo.webp" alt="LittleLeap Studios">
+  <h1>Meadow Memory</h1>
+  <div class="parade" id="parade"></div>
+  <button class="big" id="playBtn" aria-label="Play" disabled>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z" fill="#fff"/></svg>
+  </button>
+</section>
+
+<section class="screen" id="levels" hidden>
+  <div class="row">
+    <button class="lvl" data-pairs="3" aria-label="6 cards"><i></i><i></i><i></i><i></i><i></i><i></i></button>
+    <button class="lvl" data-pairs="4" aria-label="8 cards"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></button>
+    <button class="lvl" data-pairs="6" aria-label="12 cards"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></button>
+  </div>
+</section>
+
+<section class="screen" id="game" hidden>
+  <div id="board"></div>
+</section>
+
+<div id="endRow" hidden>
+  <button class="big" id="againBtn" aria-label="Play again">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35A7.96 7.96 0 0 0 12 4z" fill="#fff"/></svg>
+  </button>
+  <button class="big" id="moreBtn" aria-label="Choose how many cards">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="2" fill="#fff"/><rect x="14" y="4" width="7" height="7" rx="2" fill="#fff"/><rect x="3" y="14" width="7" height="7" rx="2" fill="#fff"/><rect x="14" y="14" width="7" height="7" rx="2" fill="#fff"/></svg>
+  </button>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<div class="sheet" id="gate" hidden>
+  <div class="cardbox" id="gateCard" role="dialog" aria-label="For grown-ups">
+    <h2>For grown-ups</h2>
+    <p>Answer the sum to see LittleLeap Studios on YouTube.</p>
+    <div id="gateQ"></div>
+    <div id="gateA" aria-live="polite"></div>
+    <div class="pad" id="pad"></div>
+    <button class="icon close" id="gateClose" aria-label="Close">✖</button>
+  </div>
+</div>
+<div class="sheet" id="parents" hidden>
+  <div class="cardbox" role="dialog" aria-label="LittleLeap Studios">
+    <img src="assets/logo.webp" alt="LittleLeap Studios" style="width:220px;max-width:100%">
+    <h2>Meet the Meadow friends</h2>
+    <p>All 18 friends in this game star in our Meadow stories on YouTube. New episodes arrive every two weeks, with audio in six languages.</p>
+    <a class="yt" id="ytLink" target="_blank" rel="noopener">▶ LittleLeap Studios on YouTube</a>
+    <p style="font-size:13px">No ads, no sign-in, nothing is collected or stored. Pictures and voices were made with the help of AI tools and reviewed by our team.</p>
+    <button class="icon close" id="parentsClose" aria-label="Close">✖</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MEADOW MEMORY
+   A picture-pairs game for ages 3-7 from LittleLeap Studios with
+   all 18 Meadow friends. Every friend says their own name in
+   their own voice when their card turns over.
+   ============================================================ */
+const CHANNEL_URL = "https://www.youtube.com/@Little-Leap-Studios";
+
+// The cast, from _studio/cast/cast.json. color = the friend's signature colour.
+const CAST = [
+  { id: "tomo", name: "Tomo", color: "#D94A3D" },
+  { id: "zippy", name: "Zippy", color: "#2F80ED" },
+  { id: "olly", name: "Olly", color: "#F2C14E" },
+  { id: "pip", name: "Pip", color: "#6BBF59" },
+  { id: "pop", name: "Pop", color: "#F5D04A" },
+  { id: "freddie", name: "Freddie", color: "#F5C542" },
+  { id: "snail", name: "Snail", color: "#B9A3E3" },
+  { id: "little_sugar", name: "Little Sugar", color: "#D9B3A0" },
+  { id: "johnatan", name: "Johnatan", color: "#B5D33D" },
+  { id: "julia", name: "Julia", color: "#4CC9F0" },
+  { id: "david", name: "David", color: "#2E7D4F" },
+  { id: "marco", name: "Marco", color: "#3F51B5" },
+  { id: "silvia", name: "Silvia", color: "#8E44AD" },
+  { id: "muriel", name: "Muriel", color: "#7ED6A5" },
+  { id: "alex", name: "Alex", color: "#FF8C42" },
+  { id: "bao", name: "Bao", color: "#2A9D8F" },
+  { id: "tara", name: "Tara", color: "#E0559A" },
+  { id: "leo", name: "Leo", color: "#1F3A6B" },
+];
+// Pip and Pop are twins and look almost alike, so they never share a board.
+const LOOKALIKES = [["pip", "pop"]];
+
+const $ = id => document.getElementById(id);
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const tint = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+
+/* ---------- sound ---------- */
+let soundOn = true, actx = null, master = null, musicGain = null;
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      master = actx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(actx.destination);
+      musicGain = actx.createGain(); musicGain.gain.value = 0.04; musicGain.connect(master);
+    } catch (e) { return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, dur, { type = "sine", vol = 0.2, at = 0, to = null, dest = null } = {}) {
+  const a = audio(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(dest || master); o.start(t); o.stop(t + dur + 0.05);
+}
+const sfx = {
+  flip: () => tone(520, 0.09, { type: "triangle", vol: 0.12, to: 780 }),
+  match: () => [784, 988, 1319].forEach((f, i) => tone(f, 0.2, { type: "triangle", vol: 0.15, at: i * 0.09 })),
+  miss: () => tone(330, 0.22, { type: "sine", vol: 0.1, to: 247 }),
+  win: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.22, { type: "triangle", vol: 0.14, at: i * 0.12 })),
+  tap: () => tone(660, 0.07, { type: "triangle", vol: 0.1 }),
+};
+const TUNE = [72, 0, 76, 79, 76, 0, 74, 72, 69, 0, 72, 74, 76, 0, 74, 0, 72, 0, 76, 79, 81, 0, 79, 76, 74, 0, 76, 74, 72, 0, 0, 0];
+let musicTimer = null, musicStep = 0, musicNext = 0;
+function startMusic() {
+  const a = audio(); if (!a || musicTimer) return;
+  musicNext = a.currentTime + 0.1;
+  musicTimer = setInterval(() => {
+    while (musicNext < a.currentTime + 0.3) {
+      const n = TUNE[musicStep % TUNE.length], at = musicNext - a.currentTime, hz = m => 440 * Math.pow(2, (m - 69) / 12);
+      if (n) tone(hz(n), 0.32, { type: "triangle", vol: 0.5, at, dest: musicGain });
+      if (musicStep % 4 === 0) tone(hz([48, 55, 52, 55, 45, 52, 48, 55][(musicStep / 4) % 8]), 0.6, { vol: 0.55, at, dest: musicGain });
+      musicStep++; musicNext += 0.27;
+    }
+  }, 100);
+}
+function musicLevel(v) { if (musicGain) musicGain.gain.setTargetAtTime(v, actx.currentTime, 0.3); }
+
+// Voices: every friend recorded "I'm <name>!" and "You found me! Hooray!" with their studio voice.
+const NARR = {
+  narr_title: "Meadow Memory!", narr_pick: "How many cards? Pick one!",
+  narr_start: "Tap two cards. Can you find the friends who match?", narr_try: "Try again!",
+  narr_win: "You found all the friends! Hooray!", narr_again: "Let's play again!",
+};
+const LINES = { ...NARR };
+for (const c of CAST) { LINES[c.id + "_name"] = `I'm ${c.name}!`; LINES[c.id + "_found"] = "You found me! Hooray!"; }
+const voiceData = {}, voiceBuf = {};
+for (const id in LINES) fetch(`voices/${id}.mp3`).then(r => r.ok ? r.arrayBuffer() : null).then(b => { if (b) voiceData[id] = b; }).catch(() => {});
+async function decodeVoices() {
+  const a = audio(); if (!a) return;
+  await Promise.all(Object.keys(voiceData).map(id => voiceBuf[id] ? null :
+    new Promise(res => a.decodeAudioData(voiceData[id].slice(0), b => { voiceBuf[id] = b; res(); }, () => res()))));
+}
+let current = null, speaking = false;
+function stopVoice() { try { current?.stop(); } catch (e) {} current = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+function say(id) {
+  const text = LINES[id] || id;
+  return new Promise(res => {
+    let done = false; const fin = () => { if (!done) { done = true; speaking = false; musicLevel(0.04); res(); } };
+    if (!soundOn) { setTimeout(fin, 300 + text.length * 40); return; }
+    stopVoice(); speaking = true; musicLevel(0.015);
+    const a = audio(), buf = voiceBuf[id];
+    if (a && buf) {
+      const s = a.createBufferSource(); s.buffer = buf; s.connect(master); s.onended = fin; s.start(); current = s;
+      setTimeout(fin, buf.duration * 1000 + 1200); return;
+    }
+    if (!("speechSynthesis" in window)) { setTimeout(fin, 600 + text.length * 60); return; }
+    const u = new SpeechSynthesisUtterance(text); u.rate = 0.95; u.onend = fin; u.onerror = fin;
+    setTimeout(fin, 2000 + text.length * 120); speechSynthesis.speak(u);
+  });
+}
+
+/* ---------- screens ---------- */
+function show(id) {
+  for (const s of ["title", "levels", "game"]) $(s).hidden = s !== id;
+  $("homeBtn").hidden = id === "title";
+  $("parentBtn").hidden = id === "game";
+  $("endRow").hidden = true;
+}
+
+// title parade: every friend, tap to hear them
+$("parade").innerHTML = CAST.map(c => `<button data-id="${c.id}" aria-label="${c.name}"><img src="assets/${c.id}.webp" alt="" draggable="false"></button>`).join("");
+$("parade").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  audio(); await decodeVoices();
+  b.firstChild.style.animation = "none"; void b.offsetWidth; b.firstChild.style.animation = "hop .6s ease";
+  say(b.dataset.id + "_name");
+});
+
+/* ---------- the game ---------- */
+let pairs = 3, first = null, lock = false, found = 0, misses = 0, gen = 0;
+function pickFriends(n) {
+  const pool = shuffle([...CAST]), out = [];
+  for (const c of pool) {
+    if (out.length === n) break;
+    const twin = LOOKALIKES.find(g => g.includes(c.id));
+    if (twin && out.some(o => twin.includes(o.id))) continue;
+    out.push(c);
+  }
+  return out;
+}
+function layout() {
+  const n = pairs * 2, vw = innerWidth - 32, vh = innerHeight - 140, gap = Math.max(8, Math.min(16, vw / 60));
+  let best = null;
+  for (let cols = 2; cols <= n; cols++) {
+    if (n % cols && cols < n) { /* allow uneven last row only if it's close */ }
+    const rows = Math.ceil(n / cols);
+    const cw = Math.min((vw - gap * (cols - 1)) / cols, ((vh - gap * (rows - 1)) / rows) * 0.78);
+    if (!best || cw > best.cw) best = { cols, cw };
+  }
+  const cw = Math.min(best.cw, 220), ch = cw / 0.78;
+  const b = $("board");
+  b.style.gridTemplateColumns = `repeat(${best.cols}, ${cw}px)`;
+  b.style.setProperty("--gap", gap + "px");
+  b.style.setProperty("--cw", cw + "px"); b.style.setProperty("--ch", ch + "px");
+  b.style.setProperty("--fs", Math.max(13, cw * 0.14) + "px");
+}
+addEventListener("resize", () => { if (!$("game").hidden) layout(); });
+
+async function deal() {
+  gen++; first = null; lock = false; found = 0; misses = 0;
+  show("game");
+  const friends = pickFriends(pairs), deck = shuffle([...friends, ...friends]);
+  layout();
+  $("board").innerHTML = deck.map((c, i) => `
+    <button class="card" data-id="${c.id}" aria-label="Card ${i + 1}" style="--tint:${tint(c.color, .22)}">
+      <span class="in">
+        <span class="backside"><img src="assets/sprout.webp" alt="" draggable="false"></span>
+        <span class="face"><span class="pic"><img src="assets/${c.id}.webp" alt="" draggable="false"></span><span class="name">${c.name}</span></span>
+      </span>
+    </button>`).join("");
+  // deal-in animation
+  const cards = [...$("board").children];
+  cards.forEach((c, i) => c.animate([{ transform: "translateY(40px) scale(.6)", opacity: 0 }, { transform: "none", opacity: 1 }],
+    { duration: 380, delay: i * 55, easing: "cubic-bezier(.3,1.4,.6,1)", fill: "backwards" }));
+  if (!deal.told) { deal.told = true; await say("narr_start"); }
+}
+
+$("board").addEventListener("click", async e => {
+  const card = e.target.closest(".card");
+  if (!card || lock || card.classList.contains("up")) return;
+  const g = gen;
+  card.classList.add("up"); sfx.flip();
+  const id = card.dataset.id;
+  if (!first) { first = card; say(id + "_name"); return; }
+  const a = first; first = null;
+  if (a.dataset.id === id) {
+    lock = true;
+    await say(id + "_name"); if (g !== gen) return;
+    a.classList.add("done"); card.classList.add("done"); sfx.match(); sparkle(card); sparkle(a);
+    found++;
+    await say(id + "_found"); if (g !== gen) return;
+    lock = false;
+    if (found === pairs) win(g);
+  } else {
+    lock = true;
+    await say(id + "_name"); if (g !== gen) return;
+    await sleep(500); if (g !== gen) return;
+    sfx.miss();
+    a.classList.add("nope"); card.classList.add("nope");
+    misses++;
+    if (misses % 3 === 0) say("narr_try");
+    await sleep(350); if (g !== gen) return;
+    a.classList.remove("up", "nope"); card.classList.remove("up", "nope");
+    lock = false;
+  }
+});
+
+async function win(g) {
+  await sleep(300); if (g !== gen) return;
+  sfx.win(); confetti();
+  document.querySelectorAll(".card").forEach(c => c.classList.add("dance"));
+  await say("narr_win"); if (g !== gen) return;
+  $("endRow").hidden = false;
+}
+
+/* ---------- sparkles & confetti ---------- */
+const cv = $("confetti"), ctx = cv.getContext("2d"); let bits = [], raf = 0;
+function sizeCanvas() { const d = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * d; cv.height = innerHeight * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
+addEventListener("resize", sizeCanvas); sizeCanvas();
+function sparkle(el) {
+  const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < 12; i++) { const t = i / 12 * Math.PI * 2; bits.push({ k: "s", x: cx, y: cy, vx: Math.cos(t) * 260, vy: Math.sin(t) * 260, life: 0.6 }); }
+  run();
+}
+function confetti() {
+  const cols = CAST.map(c => c.color);
+  for (let i = 0; i < 110; i++) bits.push({ k: "c", x: Math.random() * innerWidth, y: -20 - Math.random() * 300, vx: -40 + Math.random() * 80,
+    vy: 150 + Math.random() * 200, r: Math.random() * 6, vr: -4 + Math.random() * 8, c: cols[i % cols.length], life: 6 });
+  run();
+}
+function run() {
+  if (raf) return; let last = performance.now();
+  const step = now => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    bits = bits.filter(b => {
+      b.life -= dt; b.x += b.vx * dt; b.y += b.vy * dt;
+      if (b.k === "s") { b.vy += 400 * dt; ctx.fillStyle = `rgba(255,216,77,${Math.max(0, b.life / 0.6)})`; star(b.x, b.y, 11); }
+      else { b.r += b.vr * dt; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r); ctx.fillStyle = b.c; ctx.fillRect(-7, -11, 14, 22); ctx.restore(); }
+      return b.life > 0 && b.y < innerHeight + 40;
+    });
+    raf = bits.length ? requestAnimationFrame(step) : 0;
+  };
+  raf = requestAnimationFrame(step);
+}
+function star(x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  ctx.fill();
+}
+
+/* ---------- buttons ---------- */
+const press = (el, fn) => el.addEventListener("click", e => { e.preventDefault(); fn(); });
+press($("playBtn"), async () => { audio(); startMusic(); sfx.tap(); show("levels"); await decodeVoices(); say("narr_pick"); });
+document.querySelectorAll(".lvl").forEach(b => press(b, () => { sfx.tap(); pairs = +b.dataset.pairs; deal(); }));
+press($("againBtn"), () => { sfx.tap(); deal(); });
+press($("moreBtn"), () => { sfx.tap(); gen++; show("levels"); say("narr_pick"); });
+press($("homeBtn"), () => { sfx.tap(); gen++; stopVoice(); show("title"); });
+press($("soundBtn"), () => { soundOn = !soundOn; $("soundBtn").textContent = soundOn ? "🔊" : "🔇"; if (master) master.gain.value = soundOn ? 1 : 0; if (!soundOn) stopVoice(); });
+
+// grown-ups gate: a multiplication sum on a number pad, then the YouTube corner
+let gateAns = 0, gateTyped = "";
+function openGate() {
+  const a = 6 + Math.floor(Math.random() * 4), b = 3 + Math.floor(Math.random() * 7);
+  gateAns = a * b; gateTyped = ""; $("gateQ").textContent = `${a} × ${b} = ?`; $("gateA").textContent = ""; $("gate").hidden = false;
+}
+$("pad").innerHTML = [1,2,3,4,5,6,7,8,9,"⌫",0,"✓"].map(k => `<button class="${k === "✓" ? "ok" : ""}" data-k="${k}" aria-label="${k === "⌫" ? "Delete" : k === "✓" ? "Done" : k}">${k}</button>`).join("");
+$("pad").addEventListener("click", e => {
+  const k = e.target.closest("button")?.dataset.k; if (k == null) return;
+  if (k === "⌫") gateTyped = gateTyped.slice(0, -1);
+  else if (k === "✓") {
+    if (+gateTyped === gateAns) { $("gate").hidden = true; $("parents").hidden = false; return; }
+    $("gateCard").classList.remove("shake"); void $("gateCard").offsetWidth; $("gateCard").classList.add("shake"); openGate(); return;
+  } else if (gateTyped.length < 3) gateTyped += k;
+  $("gateA").textContent = gateTyped;
+});
+press($("parentBtn"), openGate);
+press($("gateClose"), () => { $("gate").hidden = true; });
+press($("parentsClose"), () => { $("parents").hidden = true; });
+$("ytLink").href = CHANNEL_URL;
+
+// preload the pictures, then wake the play button
+Promise.all(["sprout", "logo", ...CAST.map(c => c.id)].map(n => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = `assets/${n}.webp`; })))
+  .then(() => { $("playBtn").disabled = false; });
+</script>
+</body>
+</html>
