@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#bfe6f5">
+<title>The Big Meadow Race</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+  /* One full-screen picture-book stage (canvas) with a few big round buttons on top.
+     Colours come from the LittleLeap cast: Tomo's scarf red, Zippy's sneaker blue, Olly's whistle gold. */
+  :root {
+    --sky: #bfe6f5;
+    --cream: #fff8ec;
+    --ink: #5a3b26;          /* the warm-brown outline colour of the drawings */
+    --scarf: #d94a3d;        /* Tomo */
+    --sneaker: #2f80ed;      /* Zippy */
+    --whistle: #f2c14e;      /* Olly */
+    --leaf: #6bbf59;         /* Pip */
+    --font: "Fredoka", "Baloo 2", "Chalkboard SE", "Comic Sans MS", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; touch-action: none; }
+  body { background: linear-gradient(180deg, var(--sky), #e8f6df); font-family: var(--font); color: var(--ink); }
+  #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #c { display: block; touch-action: none; border-radius: 0; box-shadow: 0 10px 40px rgba(90,59,38,.18); }
+
+  .ui { position: fixed; z-index: 5; }
+  .icon {
+    width: 64px; height: 64px; border-radius: 50%; border: 4px solid var(--ink); background: var(--cream);
+    font-size: 30px; line-height: 1; display: grid; place-items: center; cursor: pointer; padding: 0;
+    box-shadow: 0 5px 0 rgba(90,59,38,.35); color: var(--ink);
+  }
+  .icon:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(90,59,38,.35); }
+  .icon:focus-visible, #playBtn:focus-visible, #againBtn:focus-visible { outline: 4px solid var(--sneaker); outline-offset: 3px; }
+  #homeBtn { top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); }
+  #soundBtn { top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); }
+  #parentBtn { bottom: max(14px, env(safe-area-inset-bottom)); right: max(14px, env(safe-area-inset-right)); width: 52px; height: 52px; font-size: 24px; opacity: .85; }
+
+  #playBtn, #againBtn {
+    left: 50%; bottom: max(7vh, env(safe-area-inset-bottom)); transform: translateX(-50%);
+    width: clamp(110px, 16vmin, 150px); height: clamp(110px, 16vmin, 150px); border-radius: 50%;
+    border: 6px solid var(--ink); background: var(--scarf); color: #fff; cursor: pointer; padding: 0;
+    font-size: clamp(48px, 8vmin, 72px); box-shadow: 0 8px 0 rgba(90,59,38,.4);
+    display: grid; place-items: center; animation: pulse 1.4s ease-in-out infinite;
+  }
+  #againBtn { background: var(--leaf); top: 50%; bottom: auto; margin-top: calc(clamp(110px, 16vmin, 150px) / -2); }
+  #playBtn svg, #againBtn svg { width: 55%; height: 55%; }
+  #playBtn:disabled { background: #e8d9c4; animation: none; }
+  @keyframes pulse { 0%,100% { transform: translateX(-50%) scale(1) } 50% { transform: translateX(-50%) scale(1.08) } }
+
+  /* grown-ups gate and corner */
+  .sheet { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(90,59,38,.45); }
+  .sheet[hidden] { display: none; }
+  .card { background: var(--cream); border: 4px solid var(--ink); border-radius: 28px; padding: 20px; width: min(400px, 100%); max-height: 100%; overflow-y: auto; text-align: center; touch-action: pan-y; }
+  .card h2 { margin: 0 0 4px; font-size: 24px; font-weight: 700; text-wrap: balance; }
+  .card p { margin: 0 0 12px; font: 400 15px/1.45 system-ui, sans-serif; color: #7a5a44; }
+  #gateQ { font-size: 34px; font-weight: 700; }
+  #gateA { font-size: 34px; min-height: 48px; border-bottom: 3px solid #e2cdb3; width: 120px; margin: 4px auto 12px; letter-spacing: 4px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pad button { height: 54px; font: 600 24px var(--font); border: none; border-radius: 14px; background: #f1e3cf; color: var(--ink); cursor: pointer; }
+  .pad .ok { background: var(--leaf); color: #fff; }
+  .shake { animation: shake .4s; }
+  @keyframes shake { 0%,100% { transform: translateX(0) } 25% { transform: translateX(-10px) } 75% { transform: translateX(10px) } }
+  .close { margin-top: 14px; }
+  .yt { display: flex; align-items: center; justify-content: center; gap: 10px; background: #ff0033; color: #fff; text-decoration: none;
+        font: 600 19px var(--font); padding: 14px 18px; border-radius: 40px; margin: 6px 0 12px; box-shadow: 0 5px 0 rgba(0,0,0,.18); }
+  .logo { width: 220px; max-width: 100%; margin: 4px auto 8px; display: block; }
+  .small { font-size: 13px !important; }
+
+  /* turn-your-tablet hint for portrait screens */
+  #rotate { position: fixed; z-index: 15; inset: max(20px, env(safe-area-inset-top)) 0 auto 0; display: flex; justify-content: center; pointer-events: none; }
+  #rotate[hidden] { display: none; }
+  #rotate .phone { width: 46px; height: 74px; border: 5px solid var(--ink); border-radius: 10px; background: var(--cream); animation: turn 2.4s ease-in-out infinite; }
+  @keyframes turn { 0%, 30% { transform: rotate(0) } 60%, 100% { transform: rotate(-90deg) } }
+
+  @media (prefers-reduced-motion: reduce) { #playBtn, #againBtn, #rotate .phone { animation: none; } }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="c" aria-label="The Big Meadow Race game"></canvas></div>
+
+<button class="ui icon" id="homeBtn" aria-label="Back to start" hidden>🏠</button>
+<button class="ui icon" id="soundBtn" aria-label="Sound on or off">🔊</button>
+<button class="ui icon" id="parentBtn" aria-label="For grown-ups">📺</button>
+<button class="ui" id="playBtn" aria-label="Play" disabled>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z" fill="#fff"/></svg>
+</button>
+<button class="ui" id="againBtn" aria-label="Play again" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35A7.96 7.96 0 0 0 12 4z" fill="#fff"/></svg>
+</button>
+<div id="rotate" hidden><div class="phone"></div></div>
+
+<div class="sheet" id="gate" hidden>
+  <div class="card" id="gateCard" role="dialog" aria-label="For grown-ups">
+    <h2>For grown-ups</h2>
+    <p>Answer the sum to see LittleLeap Studios on YouTube.</p>
+    <div id="gateQ"></div>
+    <div id="gateA" aria-live="polite"></div>
+    <div class="pad" id="pad"></div>
+    <button class="icon close" id="gateClose" aria-label="Close" style="margin:14px auto 0">✖</button>
+  </div>
+</div>
+
+<div class="sheet" id="parents" hidden>
+  <div class="card" role="dialog" aria-label="LittleLeap Studios">
+    <img class="logo" src="assets/logo.webp" alt="LittleLeap Studios">
+    <h2>Watch Zippy and Tomo</h2>
+    <p>This game is based on our episode “The Big Meadow Race”. New Meadow stories arrive on our YouTube channel every two weeks, with audio in six languages.</p>
+    <a class="yt" id="ytLink" target="_blank" rel="noopener">▶ LittleLeap Studios on YouTube</a>
+    <p class="small">No ads, no sign-in, nothing is collected or stored. Illustrations and voices were made with the help of AI tools and reviewed by our team.</p>
+    <button class="icon close" id="parentsClose" aria-label="Close" style="margin:4px auto 0">✖</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   THE BIG MEADOW RACE
+   A touch game for ages 3-7 from LittleLeap Studios, based on
+   EP01 "Zippy and Tomo: The Big Meadow Race".
+   Kids hold a finger down to walk Tomo through the Meadow,
+   collect 10 strawberries, tiptoe past sleeping Zippy and
+   win the race. No reading needed: the narrator speaks.
+   ============================================================ */
+
+const CHANNEL_URL = "https://www.youtube.com/@Little-Leap-Studios";
+
+/* ---------- drawings (from the cast pose libraries) ---------- */
+// For each sprite: frames and a display size in stage units (stage is 900 units tall).
+// Side views are sized by width so Tomo looks the same in every drawing.
+const SPR = {
+  tomo_walk:   { f: [1,2,3,4,5,6,7,8].map(i => `tomo_walk_${i}`), w: 230 },
+  tomo_stand:  { f: ["tomo_stand", "tomo_blink"], w: 230 },
+  tomo_cheer:  { f: ["tomo_cheer"], h: 205 },
+  tomo_happy:  { f: ["tomo_happy"], h: 205 },
+  tomo_front:  { f: ["tomo_front"], h: 205 },
+  zippy_run:   { f: [1,2,3,4,5,6].map(i => `zippy_run_${i}`), h: 300 },
+  zippy_side:  { f: ["zippy_side"], h: 290 },
+  zippy_front: { f: ["zippy_front"], h: 290 },
+  zippy_sleep: { f: ["zippy_sleep"], w: 250 },
+  zippy_surprised: { f: ["zippy_surprised"], h: 290 },
+  zippy_clap:  { f: ["zippy_clap_a", "zippy_clap_b"], h: 290 },
+  olly_stand:  { f: ["olly_stand"], h: 245 },
+  olly_whistle:{ f: ["olly_whistle"], h: 245 },
+  olly_happy:  { f: ["olly_happy"], h: 225 },
+  pip_clap:    { f: ["pip_clap_a", "pip_clap_b"], h: 190 },
+  pop_clap:    { f: ["pop_clap_a", "pop_clap_b"], h: 210 },
+  snail_happy: { f: ["snail_happy"], h: 125 },
+};
+const BGS = ["S03", "S14", "S07", "S21", "S23", "S24", "S40"];
+const IMG = {};
+
+function loadAll(onProgress) {
+  const names = [...new Set(Object.values(SPR).flatMap(s => s.f))];
+  const jobs = [
+    ...names.map(n => [n, `assets/${n}.webp`]),
+    ...BGS.map(b => [b, `assets/bg_${b}.jpg`]),
+  ];
+  let done = 0;
+  return Promise.all(jobs.map(([key, src]) => new Promise(res => {
+    const im = new Image();
+    im.onload = im.onerror = () => { done++; onProgress(done / jobs.length); res(); };
+    im.src = src; IMG[key] = im;
+    if (im.decode) im.decode().catch(() => {});
+  })));
+}
+
+/* ---------- stage & canvas ---------- */
+const cv = document.getElementById("c"), ctx = cv.getContext("2d");
+const H = 900; let W = 1600, scale = 1, dpr = 1;
+function resize() {
+  const vw = innerWidth, vh = innerHeight;
+  W = Math.round(Math.min(2000, Math.max(1150, vw / vh * H)));
+  scale = Math.min(vw / W, vh / H);
+  dpr = Math.min(2, devicePixelRatio || 1);
+  cv.style.width = Math.round(W * scale) + "px";
+  cv.style.height = Math.round(H * scale) + "px";
+  cv.width = Math.round(W * scale * dpr);
+  cv.height = Math.round(H * scale * dpr);
+  document.getElementById("rotate").hidden = !(vh > vw * 1.1) || rotateDismissed;
+}
+let rotateDismissed = false;
+addEventListener("resize", resize);
+
+// background drawn "cover", anchored to the bottom; set pieces are placed in background fractions
+function bgRect(key) {
+  const im = IMG[key]; const iw = im.naturalWidth || 1376, ih = im.naturalHeight || 768;
+  const s = Math.max(W / iw, H / ih);
+  return { x: (W - iw * s) / 2, y: H - ih * s, w: iw * s, h: ih * s };
+}
+const bx = fx => { const r = bgRect(state.bg); return r.x + fx * r.w; };
+
+function spriteSize(name, frame = 0) {
+  const s = SPR[name], im = IMG[s.f[frame % s.f.length]];
+  const iw = im.naturalWidth || 1, ih = im.naturalHeight || 1;
+  return s.w ? { w: s.w, h: s.w * ih / iw } : { w: s.h * iw / ih, h: s.h };
+}
+function drawSprite(name, frame, x, y, o = {}) {
+  const s = SPR[name], im = IMG[s.f[((frame | 0) % s.f.length + s.f.length) % s.f.length]];
+  if (!im || !im.complete) return;
+  let { w, h } = spriteSize(name, frame);
+  const k = o.k ?? 1; w *= k; h *= k;
+  ctx.save();
+  ctx.globalAlpha = o.alpha ?? 1;
+  ctx.translate(x, y);
+  if (o.flip) ctx.scale(-1, 1);
+  if (o.sq) ctx.scale(1 + o.sq, 1 - o.sq);
+  // soft ground shadow
+  if (!o.noShadow) {
+    ctx.fillStyle = "rgba(70,50,30,.18)";
+    ctx.beginPath(); ctx.ellipse(0, -2, w * 0.36, 12 * k, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.drawImage(im, -w / 2, -h, w, h);
+  ctx.restore();
+}
+
+/* ---------- strawberry, drawn in the show's style ---------- */
+function drawBerry(x, y, r, a = 1, spin = 0) {
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.rotate(spin);
+  ctx.lineWidth = r * 0.14; ctx.strokeStyle = "#5a3b26"; ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, r * 1.05);
+  ctx.bezierCurveTo(-r * 1.1, r * 0.35, -r * 1.05, -r * 0.75, -r * 0.2, -r * 0.6);
+  ctx.quadraticCurveTo(0, -r * 0.55, r * 0.2, -r * 0.6);
+  ctx.bezierCurveTo(r * 1.05, -r * 0.75, r * 1.1, r * 0.35, 0, r * 1.05);
+  ctx.closePath(); ctx.fillStyle = "#ef5a5a"; ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,.55)";
+  ctx.beginPath(); ctx.ellipse(-r * 0.42, -r * 0.18, r * 0.16, r * 0.28, -0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffe08a";
+  for (const [sx, sy] of [[-.35,.15],[.05,-.2],[.4,.1],[-.1,.45],[.25,.5],[0,.15]]) {
+    ctx.beginPath(); ctx.ellipse(sx * r, sy * r, r * .055, r * .085, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = "#6bbf59";
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const t = -Math.PI / 2 + (i - 2) * 0.55;
+    ctx.ellipse(Math.cos(t) * r * .32, -r * .62 + Math.sin(t) * r * .18 + r * .1, r * .26, r * .12, t, 0, Math.PI * 2);
+  }
+  ctx.fill(); ctx.lineWidth = r * 0.1; ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------- sound: music, effects, narrator ---------- */
+let soundOn = true, actx = null, master = null, musicGain = null;
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      master = actx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(actx.destination);
+      musicGain = actx.createGain(); musicGain.gain.value = 0.05; musicGain.connect(master);
+    } catch (e) { return null; }
+  }
+  if (actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(freq, dur, { type = "sine", vol = 0.2, at = 0, to = null, dest = null } = {}) {
+  const a = audio(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(dest || master); o.start(t); o.stop(t + dur + 0.05);
+}
+const sfx = {
+  step: () => tone(150, 0.08, { vol: 0.05, to: 90 }),
+  berry: () => { tone(988, 0.12, { type: "triangle", vol: 0.18 }); tone(1319, 0.2, { type: "triangle", vol: 0.16, at: 0.08 }); },
+  tap: () => tone(660, 0.07, { type: "triangle", vol: 0.1 }),
+  whistle: () => {
+    const a = audio(); if (!a) return;
+    const t = a.currentTime, o = a.createOscillator(), lfo = a.createOscillator(), lg = a.createGain(), g = a.createGain();
+    o.frequency.value = 2300; lfo.frequency.value = 28; lg.gain.value = 140;
+    lfo.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.03);
+    g.gain.setValueAtTime(0.12, t + 0.55); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
+    o.connect(g).connect(master); o.start(t); lfo.start(t); o.stop(t + 0.8); lfo.stop(t + 0.8);
+  },
+  zoom: () => tone(900, 0.5, { type: "sawtooth", vol: 0.05, to: 180 }),
+  ribbon: () => { tone(500, 0.12, { type: "square", vol: 0.06, to: 260 }); },
+  win: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.22, { type: "triangle", vol: 0.14, at: i * 0.12 })),
+  count: n => tone(523 * Math.pow(2, (n % 8) / 12 * 2), 0.18, { type: "triangle", vol: 0.15 }),
+};
+// a soft looping meadow tune (C major pentatonic), low under the narrator
+const TUNE = [72, 0, 76, 79, 76, 0, 74, 72, 69, 0, 72, 74, 76, 0, 74, 0,
+              72, 0, 76, 79, 81, 0, 79, 76, 74, 0, 76, 74, 72, 0, 0, 0];
+const BASS = [48, 55, 52, 55, 45, 52, 48, 55];
+let musicTimer = null, musicStep = 0, musicNext = 0;
+function startMusic() {
+  const a = audio(); if (!a || musicTimer) return;
+  musicNext = a.currentTime + 0.1;
+  musicTimer = setInterval(() => {
+    while (musicNext < a.currentTime + 0.3) {
+      const n = TUNE[musicStep % TUNE.length], at = musicNext - a.currentTime;
+      const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+      if (n) tone(hz(n), 0.32, { type: "triangle", vol: 0.5, at, dest: musicGain });
+      if (musicStep % 4 === 0) tone(hz(BASS[(musicStep / 4) % BASS.length]), 0.6, { type: "sine", vol: 0.55, at, dest: musicGain });
+      musicStep++; musicNext += 0.27;
+    }
+  }, 100);
+}
+function musicLevel(v) { if (musicGain) musicGain.gain.setTargetAtTime(v, actx.currentTime, 0.4); }
+
+// narrator: the browser's own voice, warm and a little slow
+let voice = null;
+function pickVoice() {
+  const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+  const pref = ["Samantha", "Karen", "Moira", "Tessa", "Google UK English Female", "Google US English", "Female"];
+  voice = pref.map(p => vs.find(v => v.name.includes(p))).find(Boolean) || vs[0] || null;
+}
+if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+let speaking = false;
+function say(text, { rate = 0.92, pitch = 1.1 } = {}) {
+  return new Promise(res => {
+    const fallback = 700 + text.length * 62;
+    if (!soundOn || !("speechSynthesis" in window)) { setTimeout(res, soundOn ? fallback : fallback * 0.7); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (voice) u.voice = voice;
+    u.rate = rate; u.pitch = pitch; u.lang = voice?.lang || "en-US";
+    let done = false; const fin = () => { if (!done) { done = true; speaking = false; musicLevel(0.05); res(); } };
+    u.onend = fin; u.onerror = fin;
+    setTimeout(fin, fallback * 2 + 1500);   // safety: some browsers never fire onend
+    speaking = true; musicLevel(0.025);
+    speechSynthesis.speak(u);
+  });
+}
+function sayIfQuiet(text) { if (!speaking) say(text, { rate: 1 }); }
+
+/* ---------- game state ---------- */
+const state = {
+  bg: "S03", fadeTo: null, fade: 0,
+  tomo: null, actors: [], berries: [], fx: [], ribbon: null,
+  collected: 0, holding: false, walking: false, idle: 0, hint: null,
+  t: 0, gen: 0, mode: "title", summary: null,
+};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function alive(gen) { if (gen !== state.gen) throw "stop"; }
+
+function actor(o) { const a = { frame: 0, k: 1, flip: false, alpha: 1, t: 0, ...o }; state.actors.push(a); return a; }
+
+async function fadeTo(bg, gen) {
+  for (let i = 0; i <= 12; i++) { state.fade = i / 12; await sleep(20); }
+  alive(gen);
+  state.bg = bg; state.actors = []; state.berries = []; state.fx = []; state.ribbon = null;
+  for (let i = 12; i >= 0; i--) { state.fade = i / 12; await sleep(22); }
+}
+
+// Move an actor to x with a cycle; resolves on arrival.
+function runTo(a, x, speed, gen) {
+  return new Promise(res => { a.goal = { x, speed, res, gen }; });
+}
+
+// Tomo walks while a finger is held; resolves when he reaches endX.
+function walkUntil(endX, gen, { speed = 250, triggers = [] } = {}) {
+  return new Promise(res => {
+    state.walk = { endX, speed, triggers: triggers.map(t => ({ ...t, done: false })), res, gen };
+    state.walking = true; state.idle = 0;
+  });
+}
+
+function addBerries(xs, y) {
+  state.berries = xs.map((fx, i) => ({ x: fx * W, y, got: false, t: i * 0.7, pop: 0 }));
+}
+
+/* ---------- the story ---------- */
+const TOMO_Y = () => H - 52;
+async function play() {
+  const gen = ++state.gen;
+  state.mode = "game"; state.collected = 0; state.summary = null;
+  ui("game");
+  try {
+    /* 1. Big Oak start line */
+    await fadeTo("S14", gen);
+    state.tomo = actor({ name: "tomo_stand", x: W * 0.2, y: TOMO_Y(), z: 2 });
+    const zippy = actor({ name: "zippy_side", x: W * 0.36, y: H - 70, z: 1 });
+    const olly = actor({ name: "olly_stand", x: Math.min(W * 0.82, bx(0.84)), y: H - 40, z: 0, tappable: true });
+    await say("Welcome to the Big Meadow Race!"); alive(gen);
+    await say("Zippy the hare and Tomo the tortoise are at the start line."); alive(gen);
+    await say("Tap Judge Olly to start the race!"); alive(gen);
+    await waitForTap(olly, gen);
+    olly.name = "olly_whistle"; sfx.whistle(); olly.t = 0; olly.bounce = 1;
+    await sleep(500); alive(gen);
+    await say("Ready, steady, go!", { rate: 1.05, pitch: 1.2 }); alive(gen);
+    zippy.name = "zippy_run"; sfx.zoom();
+    await runTo(zippy, W + 220, 1150, gen); alive(gen);
+    olly.name = "olly_stand";
+    await say("Whoosh! Zippy is super fast."); alive(gen);
+    await say("Now help Tomo. Press and hold your finger on the screen to walk."); alive(gen);
+    await walkUntil(W + 140, gen); alive(gen);
+
+    /* 2. Flower path: first strawberries */
+    await fadeTo("S07", gen); state.tomo.x = -140; state.actors.push(state.tomo);
+    addBerries([0.3, 0.48, 0.66, 0.84], TOMO_Y() - 150);
+    sayIfQuiet("Look, strawberries! Tomo loves strawberries.");
+    await walkUntil(W + 140, gen); alive(gen);
+
+    /* 3. Mushroom Woods: Snail says hello */
+    await fadeTo("S21", gen); state.tomo.x = -140; state.actors.push(state.tomo);
+    const snail = actor({ name: "snail_happy", x: W * 0.6, y: H - 120, z: 0, flip: true });
+    addBerries([0.28, 0.45, 0.8], TOMO_Y() - 150);
+    await walkUntil(W + 140, gen, { triggers: [
+      { x: W * 0.34, run: () => { snail.bounce = 1; say("Hello, Snail! Snail says: good luck, Tomo!"); } },
+    ] }); alive(gen);
+
+    /* 4. Giggle Stream */
+    await fadeTo("S23", gen); state.tomo.x = -140; state.actors.push(state.tomo);
+    addBerries([0.32, 0.55, 0.78], TOMO_Y() - 150);
+    sayIfQuiet("Splish, splash! The Giggle Stream.");
+    await walkUntil(W + 140, gen); alive(gen);
+
+    /* 5. Sunflower Hill: Zippy is napping, tiptoe past */
+    await fadeTo("S24", gen); state.tomo.x = -140; state.actors.push(state.tomo);
+    const napper = actor({ name: "zippy_sleep", x: W * 0.7, y: H - 88, z: 0, zzz: true });
+    musicLevel(0.02);
+    await say("Oh look! Zippy is taking a nap."); alive(gen);
+    await say("Shhh. Tiptoe quietly past him."); alive(gen);
+    state.quiet = true;
+    await walkUntil(W + 140, gen, { speed: 170, triggers: [
+      { x: W * 0.72, run: () => say("Tiptoe, tiptoe. Well done!", { rate: 0.85, pitch: 1.0 }) },
+    ] }); alive(gen);
+    state.quiet = false;
+
+    /* 6. Rainbow Bridge: the finish line */
+    await fadeTo("S40", gen); state.tomo.x = -140; state.actors.push(state.tomo);
+    const ribbonX = W * 0.7;
+    state.ribbon = { x: ribbonX, broken: 0 };
+    const finishOlly = actor({ name: "olly_stand", x: W * 0.5, y: H - 112, z: 0 });
+    const pip = actor({ name: "pip_clap", x: W * 0.83, y: H - 70, z: 1, flip: true, clap: true });
+    const pop = actor({ name: "pop_clap", x: W * 0.94, y: H - 92, z: 0, flip: true, clap: true });
+    sayIfQuiet("There is the finish line! Keep going, Tomo!");
+    await walkUntil(ribbonX - 40, gen); alive(gen);
+    state.walking = false;
+    state.ribbon.broken = 0.01; sfx.ribbon();
+    finishOlly.name = "olly_whistle"; sfx.whistle();
+    state.tomo.name = "tomo_cheer"; state.tomo.bounce = 1;
+    confetti(); sfx.win();
+    await say("Hooray! Tomo wins the Big Meadow Race!", { rate: 0.95, pitch: 1.2 }); alive(gen);
+    finishOlly.name = "olly_happy";
+    const late = actor({ name: "zippy_run", x: -200, y: H - 80, z: 1 });
+    sfx.zoom();
+    await runTo(late, W * 0.3, 1000, gen); alive(gen);
+    late.name = "zippy_surprised"; late.bounce = 1;
+    await say("Here comes Zippy. Oh! He had a long nap."); alive(gen);
+    late.name = "zippy_clap"; late.clap = true;
+    await say("Zippy says: well done, Tomo!"); alive(gen);
+    await say("Say it with me!"); alive(gen);
+    await say("Slow and steady wins the race!", { rate: 0.85, pitch: 1.15 }); alive(gen);
+    await sleep(300); alive(gen);
+    await say("One more time!"); alive(gen);
+    await say("Slow and steady wins the race!", { rate: 0.85, pitch: 1.15 }); alive(gen);
+
+    /* 7. Count the strawberries together */
+    state.summary = { shown: 0, n: state.collected };
+    await say(`Let's count Tomo's strawberries!`); alive(gen);
+    const words = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+    for (let i = 0; i < state.collected; i++) {
+      state.summary.shown = i + 1; sfx.count(i);
+      await say(words[i] + "!", { rate: 1, pitch: 1.2 }); alive(gen);
+      await sleep(150);
+    }
+    state.tomo.name = "tomo_happy";
+    if (state.collected === 10) await say("Ten strawberries! A super strawberry picnic for everyone!");
+    else if (state.collected > 0) await say(`${words[state.collected - 1]} strawberries! Yummy!`);
+    else await say("Next time, let's find some strawberries!");
+    alive(gen);
+    confetti();
+    ui("end");
+  } catch (e) { if (e !== "stop") console.error(e); }
+}
+
+function waitForTap(a, gen) {
+  return new Promise(res => { state.tapTarget = { a, res, gen }; state.idle = 0; });
+}
+
+function confetti() {
+  const cols = ["#d94a3d", "#2f80ed", "#f2c14e", "#6bbf59", "#f4a7b9", "#b9a3e3"];
+  for (let i = 0; i < 90; i++) state.fx.push({
+    kind: "conf", x: Math.random() * W, y: -20 - Math.random() * 300, vy: 160 + Math.random() * 220,
+    vx: -60 + Math.random() * 120, r: Math.random() * 6, vr: -4 + Math.random() * 8, c: cols[i % cols.length], life: 6,
+  });
+}
+
+/* ---------- update & draw ---------- */
+function update(dt) {
+  state.t += dt;
+  const tomo = state.tomo;
+  // finger-driven walking
+  if (state.walk && state.walking && tomo) {
+    const w = state.walk;
+    if (state.holding) {
+      state.idle = 0;
+      tomo.name = "tomo_walk";
+      const before = tomo.x;
+      tomo.x += w.speed * dt;
+      const step = Math.floor(tomo.x / 30) - Math.floor(before / 30);
+      if (step > 0) { tomo.frame = (tomo.frame + step) % 8; if (tomo.frame % 4 === 0 && !state.quiet) sfx.step(); }
+    } else {
+      state.idle += dt;
+      if (tomo.name === "tomo_walk") tomo.name = "tomo_stand";
+    }
+    for (const tr of w.triggers) if (!tr.done && tomo.x >= tr.x) { tr.done = true; tr.run(); }
+    if (tomo.x >= w.endX) { state.walk = null; tomo.name = "tomo_stand"; w.res(); }
+  } else if (state.tapTarget) state.idle += dt;
+  // standing Tomo blinks now and then
+  if (tomo && tomo.name === "tomo_stand") tomo.frame = (state.t % 3.2) < 0.14 ? 1 : 0;
+  // hint: a pulsing finger when the child hasn't touched for a while
+  state.hint = null;
+  if (state.walk && state.idle > 2.5) state.hint = { x: W / 2, y: H * 0.62 };
+  if (state.tapTarget && state.idle > 2.5) { const a = state.tapTarget.a; state.hint = { x: a.x, y: a.y - spriteSize(a.name).h * 0.55 }; }
+  if (state.walk && Math.abs(state.idle - 9) < dt) sayIfQuiet("Press and hold to help Tomo walk!");
+
+  // strawberries
+  for (const b of state.berries) {
+    b.t += dt;
+    if (!b.got && tomo && Math.abs(tomo.x + 70 - b.x) < 70) {
+      b.got = true; state.collected++; sfx.berry();
+      for (let i = 0; i < 10; i++) state.fx.push({ kind: "spark", x: b.x, y: b.y, vx: Math.cos(i) * 260, vy: Math.sin(i) * 260 - 80, life: 0.6 });
+      const words = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+      sayIfQuiet(words[state.collected - 1] + "!");
+    }
+    if (b.got) b.pop += dt;
+  }
+  // scripted actors
+  for (const a of state.actors) {
+    a.t += dt;
+    if (a.goal) {
+      const g = a.goal, dir = Math.sign(g.x - a.x);
+      a.flip = dir < 0; a.x += dir * g.speed * dt;
+      a.frame = Math.floor(a.t * 14);
+      if ((g.x - a.x) * dir <= 0) { a.x = g.x; a.goal = null; a.flip = false; g.res(); }
+    } else if (a.clap) a.frame = Math.floor(a.t * 5);
+    if (a.bounce) a.bounce = Math.max(0, a.bounce - dt * 2.2);
+  }
+  if (state.ribbon && state.ribbon.broken) state.ribbon.broken = Math.min(1, state.ribbon.broken + dt * 2);
+  // particles
+  state.fx = state.fx.filter(p => {
+    p.life -= dt; p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt;
+    if (p.kind === "spark") p.vy += 500 * dt;
+    if (p.kind === "conf") p.r += p.vr * dt;
+    return p.life > 0 && p.y < H + 40;
+  });
+}
+
+function draw() {
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  ctx.imageSmoothingQuality = "high";
+  const r = bgRect(state.bg);
+  ctx.fillStyle = "#bfe6f5"; ctx.fillRect(0, 0, W, H);
+  if (IMG[state.bg]?.complete) ctx.drawImage(IMG[state.bg], r.x, r.y, r.w, r.h);
+
+  if (state.mode === "title") drawTitle();
+
+  // finish ribbon behind the runners
+  if (state.ribbon) drawRibbon(state.ribbon);
+
+  // characters, back to front
+  const list = [...state.actors].sort((a, b) => a.y - b.y);
+  for (const a of list) {
+    let y = a.y;
+    if (a.bounce) y -= Math.sin(a.bounce * Math.PI) * 30;
+    const breathe = a.goal || a.name === "tomo_walk" ? 0 : Math.sin(a.t * 2.4) * 0.012;
+    drawSprite(a.name, a.frame, a.x, y, { flip: a.flip, k: a.k, sq: breathe });
+    if (a.zzz) drawZzz(a.x - 30, a.y - 200, a.t);
+    if (state.tapTarget && state.tapTarget.a === a) drawGlow(a);
+  }
+  // strawberries float in front
+  for (const b of state.berries) {
+    if (b.got && b.pop > 0.35) continue;
+    const bob = Math.sin(b.t * 3) * 8;
+    if (b.got) drawBerry(b.x, b.y - b.pop * 260, 34 * (1 + b.pop * 1.5), 1 - b.pop / 0.35, b.pop * 6);
+    else {
+      ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.arc(b.x, b.y + bob, 50, 0, Math.PI * 2); ctx.fill();
+      drawBerry(b.x, b.y + bob, 34);
+    }
+  }
+  for (const p of state.fx) {
+    if (p.kind === "spark") { ctx.fillStyle = `rgba(255,215,90,${p.life / 0.6})`; star(p.x, p.y, 10); }
+    else { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-7, -11, 14, 22); ctx.restore(); }
+  }
+  if (state.mode === "game") drawBasket();
+  if (state.summary) drawSummary();
+  if (state.hint) drawHint(state.hint);
+  if (state.fade > 0) { ctx.fillStyle = `rgba(255,248,236,${state.fade})`; ctx.fillRect(0, 0, W, H); }
+  if (state.loading < 1) drawLoading();
+}
+
+function star(x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  ctx.fill();
+}
+function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+
+function drawBasket() {
+  // the strawberry counter, top centre: a cream pill with a berry and the number
+  const x = W / 2, y = 52;
+  ctx.fillStyle = "rgba(255,248,236,.92)"; ctx.strokeStyle = "#5a3b26"; ctx.lineWidth = 5;
+  roundRect(x - 95, y - 38, 190, 76, 38); ctx.fill(); ctx.stroke();
+  drawBerry(x - 40, y + 2, 24);
+  ctx.fillStyle = "#5a3b26"; ctx.font = "700 48px Fredoka, system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(state.collected, x + 30, y + 3);
+}
+function drawSummary() {
+  const s = state.summary, n = Math.max(s.n, 1), gap = Math.min(110, (W - 200) / n);
+  const x0 = W / 2 - gap * (n - 1) / 2, y = H * 0.3;
+  ctx.fillStyle = "rgba(255,248,236,.88)"; ctx.strokeStyle = "#5a3b26"; ctx.lineWidth = 5;
+  roundRect(x0 - gap / 2 - 30, y - 90, gap * n + 60, 190, 40); ctx.fill(); ctx.stroke();
+  for (let i = 0; i < s.n; i++) {
+    const on = i < s.shown, x = x0 + i * gap;
+    drawBerry(x, y - 10, on ? 36 : 30, on ? 1 : 0.25);
+    if (on) { ctx.fillStyle = "#5a3b26"; ctx.font = "700 40px Fredoka, system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(i + 1, x, y + 62); }
+  }
+}
+function drawRibbon(rb) {
+  const x = rb.x, top = H - 230, bottom = H - 30;
+  ctx.fillStyle = "#a9744f"; ctx.strokeStyle = "#5a3b26"; ctx.lineWidth = 4;
+  for (const px of [x - 8, x + 150]) { roundRect(px - 9, top, 18, bottom - top, 8); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#f2c14e"; ctx.beginPath(); ctx.arc(px, top, 16, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#a9744f"; }
+  const ry = top + 70, b = rb.broken;
+  ctx.strokeStyle = "#d94a3d"; ctx.lineWidth = 12; ctx.lineCap = "round";
+  if (!b) { ctx.beginPath(); ctx.moveTo(x - 8, ry); ctx.quadraticCurveTo(x + 71, ry + 22, x + 150, ry); ctx.stroke(); }
+  else {
+    ctx.beginPath(); ctx.moveTo(x - 8, ry); ctx.quadraticCurveTo(x - 5, ry + 60 * b, x + 10 - 20 * b, ry + 120 * b); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 150, ry); ctx.quadraticCurveTo(x + 147, ry + 60 * b, x + 130 + 20 * b, ry + 120 * b); ctx.stroke();
+  }
+}
+function drawZzz(x, y, t) {
+  ctx.fillStyle = "#5a3b26"; ctx.textAlign = "center";
+  for (let i = 0; i < 3; i++) {
+    const p = (t * 0.45 + i / 3) % 1;
+    ctx.globalAlpha = Math.sin(p * Math.PI);
+    ctx.font = `700 ${40 + p * 34}px Fredoka, system-ui, sans-serif`;
+    ctx.fillText("z", x + p * 60 + Math.sin(p * 9) * 8, y - p * 110);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawGlow(a) {
+  const { h } = spriteSize(a.name), p = (Math.sin(state.t * 4) + 1) / 2;
+  ctx.strokeStyle = `rgba(242,193,78,${0.5 + p * 0.5})`; ctx.lineWidth = 8 + p * 6;
+  ctx.beginPath(); ctx.ellipse(a.x, a.y - h / 2, h * 0.55 + p * 10, h * 0.6 + p * 10, 0, 0, Math.PI * 2); ctx.stroke();
+}
+function drawHint(h) {
+  const p = (state.t * 1.2) % 1;
+  ctx.strokeStyle = `rgba(255,255,255,${1 - p})`; ctx.lineWidth = 10;
+  ctx.beginPath(); ctx.arc(h.x, h.y, 30 + p * 70, 0, Math.PI * 2); ctx.stroke();
+  ctx.font = "88px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.fillText("👆", h.x + 10, h.y - 10 + Math.sin(state.t * 6) * 6);
+  ctx.textBaseline = "alphabetic";
+}
+function drawTitle() {
+  const lg = IMG.logo;
+  if (lg?.complete) { const w = Math.min(560, W * 0.4), h = w * lg.naturalHeight / lg.naturalWidth; ctx.drawImage(lg, W / 2 - w / 2, 34, w, h); }
+  // title lettering in the show's colours
+  ctx.save();
+  ctx.font = `700 ${Math.min(104, W * 0.075)}px Fredoka, system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.lineJoin = "round"; ctx.lineWidth = 16; ctx.strokeStyle = "#5a3b26";
+  const y = H * 0.36 + Math.sin(state.t * 1.6) * 6;
+  ctx.strokeText("The Big Meadow Race", W / 2, y);
+  const g = ctx.createLinearGradient(0, y - 50, 0, y + 50); g.addColorStop(0, "#fff8ec"); g.addColorStop(1, "#ffe08a");
+  ctx.fillStyle = g; ctx.fillText("The Big Meadow Race", W / 2, y);
+  ctx.restore();
+  const t = state.t;
+  drawSprite("zippy_front", 0, W * 0.3, H - 45 - Math.abs(Math.sin(t * 3)) * 26, { sq: Math.sin(t * 6) * 0.01 });
+  drawSprite("tomo_front", 0, W * 0.7, H - 45, { sq: Math.sin(t * 2.4) * 0.015 });
+}
+function drawLoading() {
+  ctx.fillStyle = "rgba(255,248,236,.92)"; ctx.fillRect(0, 0, W, H);
+  const w = 420, x = W / 2 - w / 2, y = H / 2;
+  ctx.strokeStyle = "#5a3b26"; ctx.lineWidth = 6; roundRect(x, y - 22, w, 44, 22); ctx.stroke();
+  ctx.fillStyle = "#d94a3d"; roundRect(x + 8, y - 14, (w - 16) * state.loading, 28, 14); ctx.fill();
+  drawBerry(x + 8 + (w - 16) * state.loading, y - 52, 26);
+}
+
+/* ---------- input ---------- */
+function stagePoint(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
+}
+const downs = new Set();
+cv.addEventListener("pointerdown", e => {
+  e.preventDefault(); audio();
+  downs.add(e.pointerId); state.holding = true; state.idle = 0;
+  const tt = state.tapTarget;
+  if (tt) {
+    const p = stagePoint(e), a = tt.a, { w, h } = spriteSize(a.name);
+    if (Math.abs(p.x - a.x) < w * 0.75 && p.y > a.y - h * 1.2 && p.y < a.y + 40) { state.tapTarget = null; sfx.tap(); tt.res(); }
+  }
+});
+const up = e => { downs.delete(e.pointerId); if (!downs.size) state.holding = false; };
+addEventListener("pointerup", up); addEventListener("pointercancel", up);
+cv.addEventListener("contextmenu", e => e.preventDefault());
+
+/* ---------- buttons & screens ---------- */
+const $ = id => document.getElementById(id);
+function ui(mode) {
+  $("playBtn").hidden = mode !== "title";
+  $("againBtn").hidden = mode !== "end";
+  $("homeBtn").hidden = mode === "title";
+  $("parentBtn").hidden = mode === "game";
+}
+function toTitle() {
+  state.gen++; state.mode = "title"; state.walk = null; state.tapTarget = null; state.summary = null;
+  state.bg = "S03"; state.actors = []; state.berries = []; state.fx = []; state.ribbon = null; state.tomo = null; state.fade = 0;
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  ui("title");
+}
+const press = (el, fn) => el.addEventListener("click", e => { e.preventDefault(); fn(); });
+// iOS only lets a page talk after a tap, so wake the narrator inside the tap itself
+function unlockVoice() { if ("speechSynthesis" in window && soundOn) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } }
+press($("playBtn"), () => { audio(); unlockVoice(); startMusic(); sfx.tap(); play(); });
+press($("againBtn"), () => { unlockVoice(); sfx.tap(); play(); });
+press($("homeBtn"), () => { sfx.tap(); toTitle(); });
+press($("soundBtn"), () => {
+  soundOn = !soundOn; $("soundBtn").textContent = soundOn ? "🔊" : "🔇";
+  if (master) master.gain.value = soundOn ? 1 : 0;
+  if (!soundOn && "speechSynthesis" in window) speechSynthesis.cancel();
+});
+$("rotate").addEventListener("pointerdown", () => { rotateDismissed = true; $("rotate").hidden = true; });
+
+// grown-ups gate: a multiplication sum on a number pad, then the YouTube corner
+let gateAns = 0, gateTyped = "";
+function openGate() {
+  const a = 6 + Math.floor(Math.random() * 4), b = 3 + Math.floor(Math.random() * 7);
+  gateAns = a * b; gateTyped = ""; $("gateQ").textContent = `${a} × ${b} = ?`; $("gateA").textContent = "";
+  $("gate").hidden = false;
+}
+$("pad").innerHTML = [1,2,3,4,5,6,7,8,9,"⌫",0,"✓"].map(k => `<button class="${k === "✓" ? "ok" : ""}" data-k="${k}" aria-label="${k === "⌫" ? "Delete" : k === "✓" ? "Done" : k}">${k}</button>`).join("");
+$("pad").addEventListener("click", e => {
+  const k = e.target.closest("button")?.dataset.k; if (k == null) return;
+  if (k === "⌫") gateTyped = gateTyped.slice(0, -1);
+  else if (k === "✓") {
+    if (+gateTyped === gateAns) { $("gate").hidden = true; $("parents").hidden = false; return; }
+    $("gateCard").classList.remove("shake"); void $("gateCard").offsetWidth; $("gateCard").classList.add("shake");
+    openGate(); return;
+  } else if (gateTyped.length < 3) gateTyped += k;
+  $("gateA").textContent = gateTyped;
+});
+press($("parentBtn"), openGate);
+press($("gateClose"), () => { $("gate").hidden = true; });
+press($("parentsClose"), () => { $("parents").hidden = true; });
+$("ytLink").href = CHANNEL_URL;
+
+/* ---------- boot ---------- */
+state.loading = 0;
+resize();
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  update(dt); draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+IMG.logo = new Image(); IMG.logo.src = "assets/logo.webp";
+loadAll(p => { state.loading = p; }).then(() => { state.loading = 1; $("playBtn").disabled = false; });
+</script>
+</body>
+</html>
