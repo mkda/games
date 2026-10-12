@@ -26,14 +26,13 @@ RULES FOR THE AUDIENCE
 - No ads, no links out, no text input, no data collection.
 - Works in portrait and landscape; disable pinch-zoom and page scrolling while playing.
 
-GAMES (a home screen with three huge picture buttons, plus a home button on every game):
+GAMES (a home screen with four huge picture buttons, plus a home button on every game):
 1. Balloon Pop: balloons in each character's color float up with the character's face on them.
    Tap to pop. A star counter goes up. 20 pops = confetti party, then it starts again.
 2. Memory Match: 12 face-down cards (6 character pairs). Flip two; matches stay up and the character
    says their name. All pairs found = confetti party. A restart button with a 🔄 icon.
 3. Find the Friend: the game says "Find Luna!" and shows 4 characters. Tap the right one to earn a star.
    Tapping the big picture at the top repeats the name. 8 stars = confetti party.
-
 4. Video corner (📺 button): links to our YouTube channel <PASTE CHANNEL URL> and a grid of our videos
    (thumbnail + title, opening on YouTube). Put it behind a "grown-ups only" gate: a random multiplication
    sum (e.g. 7 × 8) answered on a number pad, so kids can't leave the game on their own.
