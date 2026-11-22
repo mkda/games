@@ -7,9 +7,18 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#bfe6f5">
 <title>Meadow Memory</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="theme-color" content="#6bbf59">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- Fredoka (SIL Open Font License, fonts/OFL.txt), bundled so the game works offline and in the apps -->
+<style>
+  @font-face { font-family: "Fredoka"; font-weight: 500; font-display: swap; src: url("fonts/fredoka-500.woff2") format("woff2"); }
+  @font-face { font-family: "Fredoka"; font-weight: 600; font-display: swap; src: url("fonts/fredoka-600.woff2") format("woff2"); }
+  @font-face { font-family: "Fredoka"; font-weight: 700; font-display: swap; src: url("fonts/fredoka-700.woff2") format("woff2"); }
+</style>
 <style>
   /* A meadow table of picture cards. Card backs carry the LittleLeap sprout; faces show one friend, tinted in
      that friend's signature colour, with their name underneath. */
@@ -41,11 +50,15 @@
     font-size: 30px; line-height: 1; display: grid; place-items: center; cursor: pointer; padding: 0; color: var(--ink);
     box-shadow: 0 5px 0 rgba(90,59,38,.35);
   }
+  .icon svg { width: 72%; height: 72%; display: block; }
   .icon:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(90,59,38,.35); }
   button:focus-visible { outline: 4px solid #2f80ed; outline-offset: 3px; }
   #homeBtn { top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); }
   #soundBtn { top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); }
-  #parentBtn { bottom: max(14px, env(safe-area-inset-bottom)); right: max(14px, env(safe-area-inset-right)); width: 52px; height: 52px; font-size: 24px; }
+  #parentBtn { bottom: max(14px, env(safe-area-inset-bottom)); left: max(14px, env(safe-area-inset-left)); width: 56px; height: 56px; }
+  #creditsBtn { bottom: max(14px, env(safe-area-inset-bottom)); right: max(14px, env(safe-area-inset-right)); width: 56px; height: 56px; }
+  .credits h3 { margin: 14px 0 2px; font-size: 17px; }
+  .credits .fine { font-size: 12px; color: #9a7a62; margin-top: 14px; }
 
   /* title */
   #title .logo { width: min(340px, 60vw); filter: drop-shadow(0 4px 0 rgba(255,255,255,.6)); }
@@ -53,10 +66,17 @@
     margin: 4px 0 10px; font-size: clamp(44px, 9vmin, 96px); font-weight: 700; line-height: 1; text-wrap: balance; text-align: center;
     color: var(--cream); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 6px 0 rgba(90,59,38,.35);
   }
-  .parade { display: flex; justify-content: center; align-items: flex-end; flex-wrap: wrap; gap: 2px 4px; max-width: min(1100px, 100%); margin-bottom: 18px; }
-  .parade button { border: none; background: none; padding: 0; cursor: pointer; height: clamp(54px, 11vmin, 110px); }
-  .parade img { height: 100%; width: auto; display: block; animation: bob 2.4s ease-in-out infinite; }
-  .parade button:nth-child(3n+1) img { animation-delay: .3s; } .parade button:nth-child(3n+2) img { animation-delay: .8s; }
+  /* title: logo, name and Play at the top; the whole cast stands together on the meadow grass below, at series canon sizes */
+  #title { justify-content: flex-start; padding-top: max(18px, env(safe-area-inset-top)); }
+  @media (max-height: 520px) { #title .logo { display: none; } }
+  .parade { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; pointer-events: none; }
+  .parade button { position: absolute; border: none; background: none; padding: 0; cursor: pointer; pointer-events: auto; transform: translateX(-50%); }
+  .parade button::after {                       /* soft contact shadow on the grass */
+    content: ""; position: absolute; left: 12%; right: 12%; bottom: -5%; height: 10%; border-radius: 50%; z-index: -1;
+    background: radial-gradient(closest-side, rgba(52, 92, 30, .38), rgba(52, 92, 30, 0));
+  }
+  .parade img { height: 100%; width: 100%; display: block; transform-origin: 50% 100%; animation: sway 3.2s ease-in-out infinite; }
+  .parade button:nth-child(3n+1) img { animation-delay: -.9s; } .parade button:nth-child(3n+2) img { animation-delay: -2.1s; }
   .big {
     width: clamp(110px, 17vmin, 150px); height: clamp(110px, 17vmin, 150px); border-radius: 50%; border: 6px solid var(--ink);
     background: var(--scarf); color: #fff; cursor: pointer; padding: 0; display: grid; place-items: center;
@@ -65,18 +85,67 @@
   .big svg { width: 52%; height: 52%; }
   .big:disabled { background: #e8d9c4; animation: none; }
 
-  /* level picker: three trays of little cards */
-  #levels .row { display: flex; gap: clamp(14px, 3vw, 36px); flex-wrap: wrap; justify-content: center; }
+  /* level path: eight trays of little cards, easiest first. Open cards are cream, covered cards orange. */
+  #levels .row { display: grid; grid-template-columns: repeat(4, auto); gap: clamp(10px, 2vmin, 22px); justify-content: center; }
+  @media (min-aspect-ratio: 5/4) { #levels .row { grid-template-columns: repeat(5, auto); } }
+  @media (min-aspect-ratio: 3/2) { #levels .row { grid-template-columns: repeat(7, auto); } }
+  @media (max-aspect-ratio: 4/5) { #levels .row { grid-template-columns: repeat(4, auto); } }
   .lvl {
-    border: 5px solid var(--ink); background: var(--cream); border-radius: 28px; padding: 18px; cursor: pointer;
-    box-shadow: 0 8px 0 rgba(90,59,38,.35); display: grid; gap: 7px; align-content: center; justify-content: center;
-    width: clamp(150px, 26vmin, 230px); aspect-ratio: 1;
+    position: relative; border: 5px solid var(--ink); background: var(--cream); border-radius: 24px; padding: 10px 8px 8px; cursor: pointer;
+    box-shadow: 0 7px 0 rgba(90,59,38,.35); display: flex; flex-direction: column; align-items: center; gap: 8px;
+    width: clamp(104px, min(17vmin, 15vw), 172px); font-family: var(--font); color: var(--ink);
   }
-  .lvl:active { transform: translateY(4px); box-shadow: 0 4px 0 rgba(90,59,38,.35); }
-  .lvl i { display: block; width: clamp(22px, 4vmin, 34px); aspect-ratio: 3/4; border-radius: 6px; background: var(--back); border: 3px solid var(--ink); }
-  .lvl:nth-child(1) { grid-template-columns: repeat(3, auto); }
-  .lvl:nth-child(2) { grid-template-columns: repeat(4, auto); }
-  .lvl:nth-child(3) { grid-template-columns: repeat(4, auto); }
+  .lvl .tray { display: grid; gap: 3px; align-content: center; justify-content: center; flex: 1; min-height: clamp(46px, 9vmin, 84px); }
+  .lvl .lbl { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .lvl .lbl b { font-size: clamp(15px, 2.4vmin, 20px); font-weight: 700; }
+  .lvl .lbl small { font-size: clamp(12px, 1.8vmin, 15px); font-weight: 500; opacity: .8; }
+  .lvl .meter { display: flex; gap: 3px; }
+  .lvl .meter s { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ink); background: transparent; }
+  .lvl .won { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); background: var(--cream); border: 3px solid var(--ink);
+              border-radius: 14px; padding: 0 7px; color: #f2a516; font-size: 16px; line-height: 20px; -webkit-text-stroke: 1px var(--ink); white-space: nowrap; }
+  .lvl .tray.many { gap: 2px; } .lvl .tray.many i { width: clamp(7px, 1.4vmin, 12px); border-width: 1.5px; border-radius: 2px; }
+  .lvl .meter s.on { background: var(--scarf); }
+  .lvl .meter .star { font-style: normal; color: #f2a516; font-size: 13px; line-height: 9px; -webkit-text-stroke: 1px var(--ink); }
+  #hud { position: fixed; z-index: 6; top: max(22px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+  #levelTag, #tries { background: var(--cream); border: 4px solid var(--ink); border-radius: 30px; padding: 6px 16px; font-weight: 700;
+              font-size: clamp(15px, 2.4vmin, 20px); white-space: nowrap; box-shadow: 0 4px 0 rgba(90,59,38,.3); }
+  /* tries: one paw print per turn (two cards), so children see their attempts grow; a number keeps it readable */
+  #tries { display: flex; align-items: center; gap: 6px; padding: 4px 12px; }
+  #tries svg { width: 1.25em; height: 1.25em; display: block; }
+  #tries .paws { display: flex; gap: 2px; }
+  #tries .paws svg { width: .95em; height: .95em; }
+  #tries .paws svg:last-child { animation: pawIn .35s cubic-bezier(.3,1.6,.6,1); }
+  #tries b { min-width: 1.2em; text-align: center; font-size: 1.15em; }
+  @keyframes pawIn { from { transform: scale(0) rotate(-30deg) } to { transform: scale(1) rotate(0) } }
+  /* level passed: celebration, then on to the next level */
+  #celebrate { position: fixed; inset: 0; z-index: 12; display: flex; flex-direction: column; align-items: center; justify-content: center;
+               gap: clamp(6px, 1.6vmin, 14px); background: radial-gradient(circle at 50% 45%, rgba(255,248,220,.95), rgba(255,236,190,.82) 45%, rgba(90,59,38,.35));
+               cursor: pointer; padding: 16px; text-align: center; }
+  #celebrate .ray { position: absolute; width: min(120vmin, 1100px); aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+               background: repeating-conic-gradient(rgba(255,216,77,.38) 0 9deg, transparent 9deg 22.5deg); animation: spin 18s linear infinite; }
+  #celebFriend { position: relative; height: clamp(110px, 30vmin, 260px); animation: dance 0.9s ease-in-out infinite; filter: drop-shadow(0 6px 0 rgba(90,59,38,.25)); }
+  #celebTitle { position: relative; margin: 0; font-size: clamp(32px, 7vmin, 72px); font-weight: 700; line-height: 1; color: var(--cream);
+               -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 5px 0 rgba(90,59,38,.35); }
+  #celebStars { position: relative; display: flex; gap: 8px; font-size: clamp(40px, 9vmin, 84px); line-height: 1; }
+  #celebStars i { font-style: normal; color: #e8d9c4; -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; transform: scale(0); animation: starPop .5s cubic-bezier(.3,1.6,.6,1) forwards; }
+  #celebStars i.on { color: #ffd84d; }
+  #celebStars i:nth-child(2) { animation-delay: .35s; font-size: 1.2em; margin-top: -.15em; } #celebStars i:nth-child(3) { animation-delay: .7s; }
+  #celebTries { position: relative; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: clamp(18px, 3vmin, 26px); }
+  #celebTries svg { width: 1.4em; height: 1.4em; }
+  #celebNext { position: relative; margin-top: 4px; }
+  #celebNext .ring { position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px); transform: rotate(-90deg); pointer-events: none; }
+  #celebNext .ring circle { fill: none; stroke: #ffd84d; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 302; stroke-dashoffset: 302; }
+  #celebNext.go .ring circle { animation: ringGo var(--wait, 5s) linear forwards; }
+  @keyframes ringGo { to { stroke-dashoffset: 0 } }
+  @keyframes starPop { to { transform: scale(1) } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .lvl:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(90,59,38,.35); }
+  .lvl.next { animation: pulse 1.4s ease-in-out infinite; box-shadow: 0 0 0 6px #ffd84d, 0 7px 0 rgba(90,59,38,.35); }
+  .lvl i:not(.star) { display: block; width: clamp(9px, 2.2vmin, 20px); aspect-ratio: 3/4; border-radius: 4px; background: var(--back); border: 2px solid var(--ink); }
+  .lvl i.u { background: radial-gradient(circle at 50% 50%, var(--t) 0 34%, var(--paper) 36%); }
+  .lvl .num { position: absolute; top: -12px; left: -12px; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--cream);
+              font-weight: 700; font-size: 19px; display: grid; place-items: center; }
+  .lvl .badge { position: absolute; right: -16px; top: -14px; height: 30%; filter: drop-shadow(0 2px 1px rgba(0,0,0,.25)); }
 
   /* board */
   #board { display: grid; gap: var(--gap, 12px); }
@@ -98,6 +167,9 @@
   .card .pic { position: relative; flex: 1; min-height: 0; background: radial-gradient(circle at 50% 60%, var(--tint) 0 55%, transparent 56%); }
   .card .pic img { position: absolute; left: 8%; top: 7%; width: 84%; height: 90%; object-fit: contain; }
   .card .name { font-weight: 700; font-size: var(--fs, 20px); text-align: center; padding: 2px 4px 6%; line-height: 1.05; white-space: nowrap; }
+  .card .in { translate: 0 0; transition: transform .38s cubic-bezier(.3,1.4,.6,1), translate .15s; }
+  .card.sel .in { translate: 0 -10px; }
+  .card.sel .face { box-shadow: 0 0 0 6px #2f80ed, 0 10px 0 rgba(90,59,38,.3); }
   .card.done .face { box-shadow: 0 0 0 5px #ffd84d, 0 6px 0 rgba(90,59,38,.3); }
   .card.done .pic img { animation: hop .6s ease; }
   .card.dance .pic img { animation: dance 0.9s ease-in-out infinite; }
@@ -106,6 +178,7 @@
   #endRow { position: fixed; z-index: 6; inset: 0; display: flex; align-items: center; justify-content: center; gap: 28px; background: rgba(255,248,236,.55); }
   #againBtn { background: var(--leaf); }
   #moreBtn { background: #2f80ed; }
+  #endRow .small { width: clamp(84px, 12vmin, 110px); height: clamp(84px, 12vmin, 110px); animation: none; }
 
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
 
@@ -120,11 +193,13 @@
   .pad button { height: 54px; font: 600 24px var(--font); border: none; border-radius: 14px; background: #f1e3cf; color: var(--ink); cursor: pointer; }
   .pad .ok { background: var(--leaf); color: #fff; }
   .shake { animation: wiggle .4s; }
+  .yt.album { background: #2a9d8f; margin-top: 4px; }
   .yt { display: flex; align-items: center; justify-content: center; gap: 10px; background: #ff0033; color: #fff; text-decoration: none;
         font: 600 19px var(--font); padding: 14px 18px; border-radius: 40px; margin: 6px 0 12px; box-shadow: 0 5px 0 rgba(0,0,0,.18); }
   .close { position: static; margin: 12px auto 0; }
 
   @keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+  @keyframes sway { 0%,100% { transform: rotate(-1.6deg) } 50% { transform: rotate(1.6deg) } }
   @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
   @keyframes hop { 0%,100% { transform: translateY(0) scale(1) } 40% { transform: translateY(-14%) scale(1.08) } }
   @keyframes dance { 0%,100% { transform: rotate(-6deg) translateY(0) } 50% { transform: rotate(6deg) translateY(-8%) } }
@@ -134,9 +209,10 @@
 </head>
 <body>
 
-<button class="icon" id="homeBtn" aria-label="Back" hidden>🏠</button>
-<button class="icon" id="soundBtn" aria-label="Sound on or off">🔊</button>
-<button class="icon" id="parentBtn" aria-label="For grown-ups">📺</button>
+<button class="icon" id="homeBtn" aria-label="Home" hidden><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4.5c1.6 1.8 1.6 3.6 0 5.2" fill="none" stroke="#5A3B26" stroke-width="2.4" stroke-linecap="round"/><path d="M24 6.5c2.6-1.6 5.4-1.2 6.6.6-2.4 1.4-5 1.2-6.6-.6z" fill="#6BBF59" stroke="#5A3B26" stroke-width="1.8" stroke-linejoin="round"/><rect x="11" y="21" width="26" height="20" rx="3" fill="#F7D9A8" stroke="#5A3B26" stroke-width="3"/><path d="M5.5 24.5 24 9.5l18.5 15" fill="#6BBF59" stroke="#5A3B26" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.5 41v-7.5a4.5 4.5 0 0 1 9 0V41z" fill="#FF8C42" stroke="#5A3B26" stroke-width="2.6" stroke-linejoin="round"/></svg></button>
+<button class="icon" id="soundBtn" aria-label="Sound on or off"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 18.5h7.5L24 10v28l-9.5-8.5H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" fill="#FF8C42" stroke="#5A3B26" stroke-width="3" stroke-linejoin="round"/><path d="M29.5 18.5c2.6 3.4 2.6 7.6 0 11M34.5 13.5c5.4 6.2 5.4 14.8 0 21" fill="none" stroke="#6BBF59" stroke-width="3.6" stroke-linecap="round"/></svg></button>
+<button class="icon" id="parentBtn" aria-label="For grown-ups"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="17" cy="13" r="6" fill="#F7D9A8" stroke="#5A3B26" stroke-width="2.8"/><path d="M7.5 41v-8a9.5 9.5 0 0 1 19 0v8z" fill="#2A9D8F" stroke="#5A3B26" stroke-width="2.8" stroke-linejoin="round"/><circle cx="34" cy="22" r="4.8" fill="#F7D9A8" stroke="#5A3B26" stroke-width="2.6"/><path d="M26.5 41v-5.5a7.5 7.5 0 0 1 15 0V41z" fill="#FF8C42" stroke="#5A3B26" stroke-width="2.6" stroke-linejoin="round"/></svg></button>
+<button class="icon" id="creditsBtn" aria-label="Credits"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 13c-4.5-3.2-10.5-4-17-3v26c6.5-1 12.5-.2 17 3z" fill="#FFF6E5" stroke="#5A3B26" stroke-width="2.8" stroke-linejoin="round"/><path d="M24 13c4.5-3.2 10.5-4 17-3v26c-6.5-1-12.5-.2-17 3z" fill="#F7D9A8" stroke="#5A3B26" stroke-width="2.8" stroke-linejoin="round"/><path d="M24 13v26" stroke="#5A3B26" stroke-width="2.4"/><path d="M15.5 17.5l1.4 2.9 3.2.5-2.3 2.2.5 3.2-2.8-1.5-2.9 1.5.6-3.2-2.3-2.2 3.2-.5z" fill="#FFD84D" stroke="#5A3B26" stroke-width="1.3" stroke-linejoin="round"/><path d="M33.5 28.5v-9l4-1.2v9" fill="none" stroke="#2A9D8F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="31.6" cy="28.6" r="2.1" fill="#2A9D8F"/><circle cx="35.6" cy="27.4" r="2.1" fill="#2A9D8F"/></svg></button>
 
 <section class="screen" id="title">
   <img class="logo" src="assets/logo.webp" alt="LittleLeap Studios">
@@ -148,23 +224,35 @@
 </section>
 
 <section class="screen" id="levels" hidden>
-  <div class="row">
-    <button class="lvl" data-pairs="3" aria-label="6 cards"><i></i><i></i><i></i><i></i><i></i><i></i></button>
-    <button class="lvl" data-pairs="4" aria-label="8 cards"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></button>
-    <button class="lvl" data-pairs="6" aria-label="12 cards"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></button>
-  </div>
+  <div class="row" id="path"></div>
 </section>
 
 <section class="screen" id="game" hidden>
+  <div id="hud"><div id="levelTag"></div><div id="tries" aria-live="polite"><span class="paws"></span><b id="triesN">0</b></div></div>
   <div id="board"></div>
 </section>
 
 <div id="endRow" hidden>
-  <button class="big" id="againBtn" aria-label="Play again">
+  <button class="big small" id="againBtn" aria-label="Play again">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 7.75 10h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35A7.96 7.96 0 0 0 12 4z" fill="#fff"/></svg>
   </button>
-  <button class="big" id="moreBtn" aria-label="Choose how many cards">
+  <button class="big" id="nextBtn" aria-label="Next level">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h11.2l-4.6-4.6L13 6l7 7-7 7-1.4-1.4 4.6-4.6H5z" fill="#fff" transform="translate(0 -1)"/></svg>
+  </button>
+  <button class="big small" id="moreBtn" aria-label="Choose a level">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="2" fill="#fff"/><rect x="14" y="4" width="7" height="7" rx="2" fill="#fff"/><rect x="3" y="14" width="7" height="7" rx="2" fill="#fff"/><rect x="14" y="14" width="7" height="7" rx="2" fill="#fff"/></svg>
+  </button>
+</div>
+
+<div id="celebrate" hidden>
+  <div class="ray"></div>
+  <img id="celebFriend" alt="">
+  <h2 id="celebTitle"></h2>
+  <div id="celebStars" aria-hidden="true"><i>★</i><i>★</i><i>★</i></div>
+  <div id="celebTries"></div>
+  <button class="big" id="celebNext" aria-label="Next level">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h11.2l-4.6-4.6L13 6l7 7-7 7-1.4-1.4 4.6-4.6H5z" fill="#fff" transform="translate(0 -1)"/></svg>
+    <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48"/></svg>
   </button>
 </div>
 
@@ -173,11 +261,28 @@
 <div class="sheet" id="gate" hidden>
   <div class="cardbox" id="gateCard" role="dialog" aria-label="For grown-ups">
     <h2>For grown-ups</h2>
-    <p>Answer the sum to see LittleLeap Studios on YouTube.</p>
+    <p>Answer the sum to see LittleLeap Studios on YouTube and our music.</p>
     <div id="gateQ"></div>
     <div id="gateA" aria-live="polite"></div>
     <div class="pad" id="pad"></div>
     <button class="icon close" id="gateClose" aria-label="Close">✖</button>
+  </div>
+</div>
+<div class="sheet" id="credits" hidden>
+  <div class="cardbox credits" role="dialog" aria-label="Credits">
+    <img src="assets/logo.webp" alt="LittleLeap Studios" style="width:200px;max-width:100%">
+    <h2>Credits</h2>
+    <h3>Meadow Memory</h3>
+    <p>A LittleLeap Studios game with the 18 friends from our Meadow stories.</p>
+    <h3>Watch the stories</h3>
+    <p>LittleLeap Studios on YouTube<br><b>youtube.com/@Little-Leap-Studios</b></p>
+    <h3>Music</h3>
+    <p>From the album <b>Little Leap</b> by MKDA: gentle, healing orchestral music with soft piano, warm strings and harp, all tuned to 432 Hz. On Spotify, Apple Music, YouTube Music and other music services:<br><b>distrokid.com/hyperfollow/mkda/little-leap</b></p>
+    <p>Songs in the game: Good Morning, Meadow · Tiptoe Adventure, plus a little “ta-da” from the same score.</p>
+    <h3>Made with</h3>
+    <p>Pictures, voices and music were made with the help of AI tools and reviewed by our team.</p>
+    <p class="fine">© 2026 LittleLeap Studios. All rights reserved.<br>Music ℗ © 2026 MKDA.<br>Grown-ups: the links to YouTube and the album are in the grown-ups corner (bottom left).</p>
+    <button class="icon close" id="creditsClose" aria-label="Close">✖</button>
   </div>
 </div>
 <div class="sheet" id="parents" hidden>
@@ -186,7 +291,10 @@
     <h2>Meet the Meadow friends</h2>
     <p>All 18 friends in this game star in our Meadow stories on YouTube. New episodes arrive every two weeks, with audio in six languages.</p>
     <a class="yt" id="ytLink" target="_blank" rel="noopener">▶ LittleLeap Studios on YouTube</a>
-    <p style="font-size:13px">No ads, no sign-in, nothing is collected or stored. Pictures and voices were made with the help of AI tools and reviewed by our team.</p>
+    <h2 style="margin-top:14px">The music</h2>
+    <p>All music in this game comes from our album <b>Little Leap</b>: gentle, healing orchestral music with soft piano, warm strings and harp, all tuned to 432 Hz. Lovely for calm play, quiet time and bedtime.</p>
+    <a class="yt album" id="albumLink" target="_blank" rel="noopener">♪ Listen to the album Little Leap</a>
+    <p style="font-size:13px"><a href="privacy.html" target="_blank" rel="noopener" style="color:inherit">Privacy policy</a> · No ads, no sign-in, nothing is collected or stored. Pictures and voices were made with the help of AI tools and reviewed by our team.</p>
     <button class="icon close" id="parentsClose" aria-label="Close">✖</button>
   </div>
 </div>
@@ -199,6 +307,7 @@
    their own voice when their card turns over.
    ============================================================ */
 const CHANNEL_URL = "https://www.youtube.com/@Little-Leap-Studios";
+const ALBUM_URL = "https://distrokid.com/hyperfollow/mkda/little-leap";   // album "Little Leap" (released as MKDA): every store in one link
 
 // The cast, from _studio/cast/cast.json. color = the friend's signature colour.
 const CAST = [
@@ -225,6 +334,8 @@ const CAST = [
 const LOOKALIKES = [["pip", "pop"]];
 
 const $ = id => document.getElementById(id);
+const PAW = '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="16" rx="5.2" ry="4.4" fill="#FF8C42" stroke="#5A3B26" stroke-width="1.6"/><circle cx="5.6" cy="10.4" r="2.3" fill="#FF8C42" stroke="#5A3B26" stroke-width="1.4"/><circle cx="9.6" cy="6.4" r="2.3" fill="#FF8C42" stroke="#5A3B26" stroke-width="1.4"/><circle cx="14.4" cy="6.4" r="2.3" fill="#FF8C42" stroke="#5A3B26" stroke-width="1.4"/><circle cx="18.4" cy="10.4" r="2.3" fill="#FF8C42" stroke="#5A3B26" stroke-width="1.4"/></svg>';
+const ICONS = { sound: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 18.5h7.5L24 10v28l-9.5-8.5H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" fill="#FF8C42" stroke="#5A3B26" stroke-width="3" stroke-linejoin="round"/><path d="M29.5 18.5c2.6 3.4 2.6 7.6 0 11M34.5 13.5c5.4 6.2 5.4 14.8 0 21" fill="none" stroke="#6BBF59" stroke-width="3.6" stroke-linecap="round"/></svg>', mute: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 18.5h7.5L24 10v28l-9.5-8.5H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" fill="#E8D9C4" stroke="#5A3B26" stroke-width="3" stroke-linejoin="round"/><path d="M30 19l10 10M40 19 30 29" fill="none" stroke="#5A3B26" stroke-width="3.4" stroke-linecap="round"/></svg>' };
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const tint = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
@@ -236,7 +347,7 @@ function audio() {
     try {
       actx = new (window.AudioContext || window.webkitAudioContext)();
       master = actx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(actx.destination);
-      musicGain = actx.createGain(); musicGain.gain.value = 0.04; musicGain.connect(master);
+      musicGain = actx.createGain(); musicGain.gain.value = MUSIC_FULL; musicGain.connect(master);
     } catch (e) { return null; }
   }
   if (actx.state === "suspended") actx.resume();
@@ -256,30 +367,73 @@ const sfx = {
   win: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.22, { type: "triangle", vol: 0.14, at: i * 0.12 })),
   tap: () => tone(660, 0.07, { type: "triangle", vol: 0.1 }),
 };
-const TUNE = [72, 0, 76, 79, 76, 0, 74, 72, 69, 0, 72, 74, 76, 0, 74, 0, 72, 0, 76, 79, 81, 0, 79, 76, 74, 0, 76, 74, 72, 0, 0, 0];
-let musicTimer = null, musicStep = 0, musicNext = 0;
-function startMusic() {
-  const a = audio(); if (!a || musicTimer) return;
-  musicNext = a.currentTime + 0.1;
-  musicTimer = setInterval(() => {
-    while (musicNext < a.currentTime + 0.3) {
-      const n = TUNE[musicStep % TUNE.length], at = musicNext - a.currentTime, hz = m => 440 * Math.pow(2, (m - 69) / 12);
-      if (n) tone(hz(n), 0.32, { type: "triangle", vol: 0.5, at, dest: musicGain });
-      if (musicStep % 4 === 0) tone(hz([48, 55, 52, 55, 45, 52, 48, 55][(musicStep / 4) % 8]), 0.6, { vol: 0.55, at, dest: musicGain });
-      musicStep++; musicNext += 0.27;
+/* ---------- music: the LittleLeap Studios score (episode cues from the "Little Leap" album sound, 432 Hz) ----------
+   Streamed from music/*.mp3 (not decoded into memory), mastered at -20 LUFS so it sits under the voices (-18 LUFS).
+   Each track runs through its own gain for crossfades, then musicGain (ducks under voices), then master (mute). */
+const MUSIC_FULL = 0.85, MUSIC_DUCK = 0.35;
+const tracks = {}; let curTrack = null;
+function track(name, loop = true) {
+  let t = tracks[name];
+  if (!t) {
+    const el = new Audio(`music/${name}.mp3`); el.preload = "auto"; el.loop = loop; el.setAttribute("playsinline", "");
+    t = tracks[name] = { name, el, gain: null };
+    const a = audio();
+    if (a && a.createMediaElementSource) {
+      try { t.gain = a.createGain(); t.gain.gain.value = 0; a.createMediaElementSource(el).connect(t.gain).connect(musicGain); }
+      catch (e) { t.gain = null; }
     }
-  }, 100);
+    if (!t.gain) el.volume = 0;
+  }
+  return t;
+}
+function fadeTrack(t, v, d) {
+  if (t.gain && actx) { const g = t.gain.gain, now = actx.currentTime; g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(v, now + d); }
+  else t.el.volume = v * MUSIC_FULL;
+}
+// iOS starts audio only inside a tap: touch every track once during the first tap (silent, then paused)
+function unlockMusic(list) {
+  audio();
+  for (const [n, loop] of list) { const t = track(n, loop); t.el.play().then(() => { if (curTrack !== n) t.el.pause(); }).catch(() => {}); }
+}
+function playMusic(name, { loop = true, fade = 1.2 } = {}) {
+  if (curTrack === name) return;
+  const old = curTrack && tracks[curTrack]; curTrack = name;
+  if (old) { fadeTrack(old, 0, fade); setTimeout(() => { if (curTrack !== old.name) old.el.pause(); }, fade * 1000 + 150); }
+  if (!name) return;
+  const t = track(name, loop); t.el.loop = loop;
+  try { t.el.currentTime = 0; } catch (e) {}
+  t.el.play().catch(() => {});
+  fadeTrack(t, 1, 0.5);
+}
+function playSting(name) {                                   // a short one-shot over the music (not a track change)
+  const t = track(name, false); try { t.el.currentTime = 0; } catch (e) {}
+  fadeTrack(t, 1, 0.01); t.el.play().catch(() => {});
 }
 function musicLevel(v) { if (musicGain) musicGain.gain.setTargetAtTime(v, actx.currentTime, 0.3); }
+// Home screen music: browsers only allow sound after the first touch, so the first tap anywhere (a friend, Play, the
+// grown-ups corner) starts "Good Morning, Meadow"; it keeps playing on the level path and changes when a board starts.
+let homeMusic = false;
+function startHomeMusic() {
+  if (homeMusic) return; homeMusic = true;
+  unlockMusic([["morning", true], ["cheeky", true], ["tada", false]]);
+  if ($("game").hidden) playMusic("morning");
+}
+document.addEventListener("pointerdown", startHomeMusic, { once: true, capture: true });
+// In the Android/iOS apps sound may start without a tap: try once at load, else wait for the first tap.
+addEventListener("load", () => { try { const a = audio(); if (a && a.state === "running") startHomeMusic(); } catch (e) {} });
+// Offline play for the web version (GitHub Pages). Not in the apps (they run from localhost and carry all files).
+if ("serviceWorker" in navigator && location.protocol === "https:" && location.hostname !== "localhost")
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+document.addEventListener("keydown", startHomeMusic, { once: true, capture: true });
 
-// Voices: every friend recorded "I'm <name>!" and "You found me! Hooray!" with their studio voice.
+// Voices: every friend recorded "I'm <name>!" and "You found me!" with their studio voice.
 const NARR = {
-  narr_title: "Meadow Memory!", narr_pick: "How many cards? Pick one!",
+  narr_title: "Meadow Memory!", narr_pick: "Which game? Pick one!",
   narr_start: "Tap two cards. Can you find the friends who match?", narr_try: "Try again!",
-  narr_win: "You found all the friends! Hooray!", narr_again: "Let's play again!",
+  narr_win: "You found all the friends!", narr_again: "Let's play again!",
 };
 const LINES = { ...NARR };
-for (const c of CAST) { LINES[c.id + "_name"] = `I'm ${c.name}!`; LINES[c.id + "_found"] = "You found me! Hooray!"; }
+for (const c of CAST) { LINES[c.id + "_name"] = `I'm ${c.name}!`; LINES[c.id + "_found"] = "You found me!"; }
 const voiceData = {}, voiceBuf = {};
 for (const id in LINES) fetch(`voices/${id}.mp3`).then(r => r.ok ? r.arrayBuffer() : null).then(b => { if (b) voiceData[id] = b; }).catch(() => {});
 async function decodeVoices() {
@@ -292,9 +446,9 @@ function stopVoice() { try { current?.stop(); } catch (e) {} current = null; if 
 function say(id) {
   const text = LINES[id] || id;
   return new Promise(res => {
-    let done = false; const fin = () => { if (!done) { done = true; speaking = false; musicLevel(0.04); res(); } };
+    let done = false; const fin = () => { if (!done) { done = true; speaking = false; musicLevel(MUSIC_FULL); res(); } };
     if (!soundOn) { setTimeout(fin, 300 + text.length * 40); return; }
-    stopVoice(); speaking = true; musicLevel(0.015);
+    stopVoice(); speaking = true; musicLevel(MUSIC_DUCK);
     const a = audio(), buf = voiceBuf[id];
     if (a && buf) {
       const s = a.createBufferSource(); s.buffer = buf; s.connect(master); s.onended = fin; s.start(); current = s;
@@ -310,33 +464,135 @@ function say(id) {
 function show(id) {
   for (const s of ["title", "levels", "game"]) $(s).hidden = s !== id;
   $("homeBtn").hidden = id === "title";
-  $("parentBtn").hidden = id === "game";
-  $("endRow").hidden = true;
+  $("parentBtn").hidden = $("creditsBtn").hidden = id === "game";
+  $("endRow").hidden = true; $("celebrate").hidden = true;
+  if (id === "title") requestAnimationFrame(layoutParade);
 }
 
 // title parade: every friend, tap to hear them
-$("parade").innerHTML = CAST.map(c => `<button data-id="${c.id}" aria-label="${c.name}"><img src="assets/${c.id}.webp" alt="" draggable="false"></button>`).join("");
+// Stand heights from the series size canon (CANON.md / cast.json height_canon, Zippy = 380 incl. ears). Johnatan, Julia and
+// Tara have no canon yet: 300 / 400 / 330 are placeholders until the owner sets them.
+const HEIGHT = { zippy: 380, david: 380, marco: 330, muriel: 300, silvia: 280, little_sugar: 250, tomo: 225, pip: 130, pop: 130,
+  olly: 285, freddie: 230, snail: 120, alex: 620, bao: 300, leo: 460, johnatan: 300, julia: 400, tara: 330 };
+// a group photo: taller friends in the back row, smaller ones in front, standing in the gaps
+const BACK = ["muriel", "julia", "zippy", "leo", "alex", "david", "marco", "tara", "johnatan"];
+const FRONT = ["silvia", "little_sugar", "pip", "tomo", "snail", "pop", "freddie", "olly", "bao"];
+const aspect = {};
+$("parade").innerHTML = [...BACK, ...FRONT].map(id => { const c = CAST.find(x => x.id === id);
+  return `<button data-id="${id}" aria-label="${c.name}"><img src="assets/${id}.webp" alt="" draggable="false"></button>`; }).join("");
+function layoutParade() {
+  const pr = $("parade"); if ($("title").hidden) return;
+  const W = innerWidth, H = innerHeight, top = $("playBtn").getBoundingClientRect().bottom + 14;
+  const ground = Math.max(10, H * 0.03) + (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sab")) || 0);
+  const rowGap = H * 0.05, overlap = 0.86, side = 16;
+  const rowW = ids => ids.reduce((s, id) => s + (aspect[id] || 0.75) * HEIGHT[id], 0) * overlap;
+  const sW = (W - side * 2) / Math.max(rowW(BACK), rowW(FRONT));
+  const sH = (H - top - ground - rowGap) / Math.max(...BACK.map(id => HEIGHT[id]));
+  const s = Math.max(0.12, Math.min(sW, sH));
+  const place = (ids, feet, z) => {
+    const total = rowW(ids) * s; let x = (W - total) / 2;
+    ids.forEach(id => {
+      const b = pr.querySelector(`[data-id="${id}"]`), h = HEIGHT[id] * s, w = (aspect[id] || 0.75) * h;
+      x += w * overlap / 2;
+      Object.assign(b.style, { left: x + "px", bottom: feet + "px", height: h + "px", width: w + "px", zIndex: z });
+      x += w * overlap / 2;
+    });
+  };
+  place(BACK, ground + rowGap, 1); place(FRONT, ground, 2);
+}
+[...BACK, ...FRONT].forEach(id => { const im = new Image(); im.onload = () => { aspect[id] = im.naturalWidth / im.naturalHeight; layoutParade(); }; im.src = `assets/${id}.webp`; });
+addEventListener("resize", layoutParade);
 $("parade").addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   audio(); await decodeVoices();
-  b.firstChild.style.animation = "none"; void b.offsetWidth; b.firstChild.style.animation = "hop .6s ease";
+  const im = b.firstChild; im.style.animation = "none"; void im.offsetWidth; im.style.animation = "hop .6s ease";
+  im.onanimationend = () => { im.style.animation = ""; };
   say(b.dataset.id + "_name");
 });
 
+/* ---------- levels: a gentle path from "everything is showing" to real memory ---------- */
+// cover: how many cards start face down (-1 = all). In levels 2-4 at most one card of each pair is covered,
+// so the child can always see the friend they are looking for. poses: the same friends in different drawings.
+// hard = 1-5 dots on the tray; label + note tell grown-ups how hard the level is.
+const LEVELS = [
+  { pairs: 3, cover: 0,  hard: 1, label: "Very easy", note: "All cards showing" },
+  { pairs: 3, cover: 1,  hard: 1, label: "Easy",      note: "1 card hidden" },
+  { pairs: 3, cover: 2,  hard: 2, label: "Easy",      note: "2 cards hidden" },
+  { pairs: 3, cover: 3,  hard: 2, label: "Medium",    note: "3 cards hidden" },
+  { pairs: 3, cover: -1, hard: 3, label: "Medium",    note: "Memory · 6 cards" },
+  { pairs: 4, cover: -1, hard: 4, label: "Hard",      note: "Memory · 8 cards" },
+  { pairs: 6, cover: -1, hard: 4, label: "Harder",    note: "Memory · 12 cards" },
+  { pairs: 6, cover: -1, hard: 5, label: "Very hard", note: "12 cards · poses", poses: true },
+  // the four extra-hard screens (owner, 22 Nov 2026)
+  { pairs: 8, cover: -1, hard: 6, label: "Expert",    note: "Memory · 16 cards" },
+  { pairs: 8, cover: -1, hard: 6, label: "Expert",    note: "16 cards · poses", poses: true },
+  { pairs: 10, cover: -1, hard: 7, label: "Master",   note: "20 cards · twins", twins: true },
+  { pairs: 10, cover: -1, hard: 7, label: "Champion", note: "20 cards · poses", poses: true },
+  // all 18 friends on one board (owner, 22 Nov 2026): once with every card showing, once all face down
+  { pairs: 18, cover: 0,  hard: 3, label: "All friends", note: "36 cards showing", all: true },
+  { pairs: 18, cover: -1, hard: 8, label: "All friends", note: "36 cards hidden", all: true },
+];
+// Drawings for the poses level, from the cast pose libraries (only clearly different poses).
+const POSES = {
+  tomo: ["tomo_front", "tomo_cheer", "tomo_eat", "tomo_stand"],
+  zippy: ["zippy_front", "zippy_surprised", "zippy_side", "zippy_sleep"],
+  olly: ["olly_stand", "olly_whistle", "olly_happy"],
+};
+
 /* ---------- the game ---------- */
-let pairs = 3, first = null, lock = false, found = 0, misses = 0, gen = 0;
-function pickFriends(n) {
-  const pool = shuffle([...CAST]), out = [];
-  for (const c of pool) {
+let level = 0, first = null, lock = false, found = 0, misses = 0, gen = 0, cleared = -1;
+const pairsNow = () => LEVELS[level].pairs;
+// Rotation: every friend and every pose drawing gets its turn. Each board takes the friends that have been on the
+// fewest boards so far (ties in random order), so over a few games all 18 friends appear before anyone repeats much.
+const seen = {};                                              // id or pose key -> boards it was on (this visit)
+const rotation = list => shuffle([...list]).sort((a, b) => (seen[a] || 0) - (seen[b] || 0));
+const mark = cards => cards.forEach(c => seen[c.key] = (seen[c.key] || 0) + 1);
+function pickFriends(n, twins = false, all = false) {
+  const out = [], add = id => { const c = CAST.find(x => x.id === id); out.push({ ...c, key: c.id, img: c.id }); };
+  if (all || n >= CAST.length) { CAST.forEach(c => add(c.id)); return out; }
+  if (twins) LOOKALIKES[0].forEach(add);
+  for (const id of rotation(CAST.map(c => c.id))) {
     if (out.length === n) break;
-    const twin = LOOKALIKES.find(g => g.includes(c.id));
-    if (twin && out.some(o => twin.includes(o.id))) continue;
-    out.push(c);
+    if (out.some(o => o.id === id)) continue;
+    const twin = LOOKALIKES.find(g => g.includes(id));
+    if (!twins && twin && out.some(o => twin.includes(o.id))) continue;
+    add(id);
   }
-  return out;
+  mark(out); return out;
 }
+function pickPoses(n) {
+  const ids = Object.keys(POSES), per = Math.ceil(n / ids.length), out = [];
+  for (const id of ids) {
+    const c = CAST.find(x => x.id === id);
+    for (const p of rotation(POSES[id]).slice(0, per)) out.push({ ...c, key: p, img: "pose_" + p });
+  }
+  const pick = rotation(out.map(o => o.key)).slice(0, n).map(k => out.find(o => o.key === k));
+  mark(pick); return pick;
+}
+
+// the level path: each tray is a little picture of its board
+function drawPath() {
+  const cols = ["#D94A3D", "#2F80ED", "#F2C14E", "#6BBF59", "#8E44AD", "#FF8C42"];
+  $("path").innerHTML = LEVELS.map((L, i) => {
+    const n = L.pairs * 2, down = L.cover < 0 ? n : L.cover;
+    const minis = Array.from({ length: n }, (_, k) => k < n - down ? `<i class="u" style="--t:${cols[k % 6]}"></i>` : "<i></i>");
+    const per = n <= 6 ? 3 : n <= 16 ? 4 : n <= 20 ? 5 : 9;
+    const meter = [1, 2, 3, 4, 5].map(d => `<s class="${d <= L.hard ? "on" : ""}"></s>`).join("") + "<i class=\"star\">★</i>".repeat(Math.max(0, L.hard - 5));
+    return `<button class="lvl${i === Math.min(cleared + 1, LEVELS.length - 1) ? " next" : ""}" data-level="${i}" aria-label="Level ${i + 1}: ${L.label}, ${L.note}">
+      <span class="num">${i + 1}</span>
+      <span class="tray${n > 20 ? " many" : ""}" style="grid-template-columns:repeat(${per},auto)">${minis.join("")}</span>
+      <span class="meter" aria-hidden="true">${meter}</span>
+      <span class="lbl"><b>${L.label}</b><small>${L.note}</small></span>
+      ${stars[i] ? `<span class="won" aria-label="${stars[i]} stars">${"★".repeat(stars[i])}</span>` : ""}
+      ${L.poses ? '<img class="badge" src="assets/pose_tomo_cheer.webp" alt="">' : ""}</button>`;
+  }).join("");
+}
+$("path").addEventListener("click", e => {
+  const b = e.target.closest(".lvl"); if (!b) return;
+  sfx.tap(); level = +b.dataset.level; deal();
+});
 function layout() {
-  const n = pairs * 2, vw = innerWidth - 32, vh = innerHeight - 140, gap = Math.max(8, Math.min(16, vw / 60));
+  const n = pairsNow() * 2, vw = innerWidth - 32, vh = innerHeight - 140, gap = Math.max(8, Math.min(16, vw / 60));
   let best = null;
   for (let cols = 2; cols <= n; cols++) {
     if (n % cols && cols < n) { /* allow uneven last row only if it's close */ }
@@ -356,13 +612,20 @@ addEventListener("resize", () => { if (!$("game").hidden) layout(); });
 async function deal() {
   gen++; first = null; lock = false; found = 0; misses = 0;
   show("game");
-  const friends = pickFriends(pairs), deck = shuffle([...friends, ...friends]);
+  playMusic("cheeky");
+  const L = LEVELS[level];
+  $("levelTag").textContent = `Level ${level + 1} · ${L.label}`; showTries();
+  const friends = L.poses ? pickPoses(L.pairs) : pickFriends(L.pairs, L.twins, L.all);
+  const deck = shuffle([...friends, ...friends].map((c, i) => ({ ...c, open: true, twin: i >= friends.length })));
+  if (L.cover < 0) deck.forEach(c => c.open = false);
+  else shuffle(friends.map(f => f.key)).slice(0, L.cover)
+    .forEach(k => { const hide = shuffle(deck.filter(c => c.key === k))[0]; hide.open = false; });   // one card of that pair
   layout();
   $("board").innerHTML = deck.map((c, i) => `
-    <button class="card" data-id="${c.id}" aria-label="Card ${i + 1}" style="--tint:${tint(c.color, .22)}">
+    <button class="card${c.open ? " up open" : ""}" data-id="${c.id}" data-key="${c.key}" aria-label="Card ${i + 1}" style="--tint:${tint(c.color, .22)}">
       <span class="in">
         <span class="backside"><img src="assets/sprout.webp" alt="" draggable="false"></span>
-        <span class="face"><span class="pic"><img src="assets/${c.id}.webp" alt="" draggable="false"></span><span class="name">${c.name}</span></span>
+        <span class="face"><span class="pic"><img src="assets/${c.img}.webp" alt="" draggable="false"></span><span class="name">${c.name}</span></span>
       </span>
     </button>`).join("");
   // deal-in animation
@@ -374,40 +637,82 @@ async function deal() {
 
 $("board").addEventListener("click", async e => {
   const card = e.target.closest(".card");
-  if (!card || lock || card.classList.contains("up")) return;
+  if (!card || lock || card.classList.contains("done")) return;
+  const open = card.classList.contains("open");
+  if (card === first) {                                     // tapping the picked card again puts it back
+    if (open) { card.classList.remove("sel"); first = null; sfx.tap(); }
+    return;
+  }
   const g = gen;
-  card.classList.add("up"); sfx.flip();
-  const id = card.dataset.id;
+  if (open) sfx.tap(); else { card.classList.add("up"); sfx.flip(); }
+  card.classList.add("sel");
+  const id = card.dataset.id, key = card.dataset.key;
   if (!first) { first = card; say(id + "_name"); return; }
   const a = first; first = null;
-  if (a.dataset.id === id) {
+  const back = c => { c.classList.remove("sel", "nope"); if (!c.classList.contains("open")) c.classList.remove("up"); };
+  if (a.dataset.key === key) {
     lock = true;
     await say(id + "_name"); if (g !== gen) return;
+    a.classList.remove("sel"); card.classList.remove("sel");
     a.classList.add("done"); card.classList.add("done"); sfx.match(); sparkle(card); sparkle(a);
-    found++;
+    found++; showTries();
     await say(id + "_found"); if (g !== gen) return;
     lock = false;
-    if (found === pairs) win(g);
+    if (found === pairsNow()) win(g);
   } else {
     lock = true;
     await say(id + "_name"); if (g !== gen) return;
     await sleep(500); if (g !== gen) return;
     sfx.miss();
     a.classList.add("nope"); card.classList.add("nope");
-    misses++;
+    misses++; showTries();
     if (misses % 3 === 0) say("narr_try");
     await sleep(350); if (g !== gen) return;
-    a.classList.remove("up", "nope"); card.classList.remove("up", "nope");
+    back(a); back(card);
     lock = false;
   }
 });
 
+// tries = turns (two cards each). Shown as paw prints (the last 10) plus the number.
+function showTries() {
+  const t = found + misses;
+  $("tries").querySelector(".paws").innerHTML = PAW.repeat(Math.min(t, 10));
+  $("triesN").textContent = t;
+}
+// stars for the celebration: a perfect game is one turn per pair
+function starsFor(tries, pairs) { return tries <= Math.ceil(pairs * 1.5) ? 3 : tries <= pairs * 2.5 ? 2 : 1; }
+const stars = {};          // best stars per level, this visit only (nothing is stored)
+
 async function win(g) {
   await sleep(300); if (g !== gen) return;
-  sfx.win(); confetti();
+  playSting("tada"); confetti();
   document.querySelectorAll(".card").forEach(c => c.classList.add("dance"));
+  cleared = Math.max(cleared, level);
+  const L = LEVELS[level], tries = found + misses, st = starsFor(tries, L.pairs), last = level >= LEVELS.length - 1;
+  stars[level] = Math.max(stars[level] || 0, st);
+  await sleep(900); if (g !== gen) return;
+  // the celebration screen: a friend from this board dances, stars pop in, then the next level starts by itself
+  const keys = [...document.querySelectorAll(".card")].map(c => c.querySelector(".pic img").getAttribute("src"));
+  $("celebFriend").src = keys[Math.floor(Math.random() * keys.length)];
+  $("celebTitle").textContent = last ? "Memory Champion!" : `Level ${level + 1} done!`;
+  $("celebStars").innerHTML = [1, 2, 3].map(i => `<i class="${i <= st ? "on" : ""}">★</i>`).join("");
+  $("celebTries").innerHTML = `${PAW}<span>${tries} ${tries === 1 ? "try" : "tries"}</span>`;
+  $("celebNext").setAttribute("aria-label", last ? "Choose a level" : "Next level");
+  $("celebNext").classList.remove("go"); $("celebrate").hidden = false;
+  confetti();
+  const wait = last ? 0 : 5;
+  if (wait) { $("celebNext").style.setProperty("--wait", wait + "s"); void $("celebNext").offsetWidth; $("celebNext").classList.add("go"); }
+  [1, 2, 3].slice(0, st).forEach(i => setTimeout(() => { if (g === gen) sfx.match(); }, 350 * i));
   await say("narr_win"); if (g !== gen) return;
-  $("endRow").hidden = false;
+  if (!wait) return;                                          // last level: stay until the child taps
+  await sleep(Math.max(0, wait * 1000 - 1600)); if (g !== gen) return;
+  nextFromCelebration();
+}
+function nextFromCelebration() {
+  if ($("celebrate").hidden) return;
+  $("celebrate").hidden = true; gen++;
+  if (level >= LEVELS.length - 1) { toPath(); say("narr_pick"); return; }
+  level++; deal();
 }
 
 /* ---------- sparkles & confetti ---------- */
@@ -448,12 +753,14 @@ function star(x, y, r) {
 
 /* ---------- buttons ---------- */
 const press = (el, fn) => el.addEventListener("click", e => { e.preventDefault(); fn(); });
-press($("playBtn"), async () => { audio(); startMusic(); sfx.tap(); show("levels"); await decodeVoices(); say("narr_pick"); });
-document.querySelectorAll(".lvl").forEach(b => press(b, () => { sfx.tap(); pairs = +b.dataset.pairs; deal(); }));
+function toPath() { drawPath(); show("levels"); playMusic("morning"); }
+press($("playBtn"), async () => { unlockMusic([["morning", true], ["cheeky", true], ["tada", false]]); sfx.tap(); toPath(); await decodeVoices(); say("narr_pick"); });
+$("celebrate").addEventListener("click", e => { e.preventDefault(); sfx.tap(); nextFromCelebration(); });
 press($("againBtn"), () => { sfx.tap(); deal(); });
-press($("moreBtn"), () => { sfx.tap(); gen++; show("levels"); say("narr_pick"); });
+press($("nextBtn"), () => { sfx.tap(); level = Math.min(level + 1, LEVELS.length - 1); deal(); });
+press($("moreBtn"), () => { sfx.tap(); gen++; toPath(); say("narr_pick"); });
 press($("homeBtn"), () => { sfx.tap(); gen++; stopVoice(); show("title"); });
-press($("soundBtn"), () => { soundOn = !soundOn; $("soundBtn").textContent = soundOn ? "🔊" : "🔇"; if (master) master.gain.value = soundOn ? 1 : 0; if (!soundOn) stopVoice(); });
+press($("soundBtn"), () => { soundOn = !soundOn; $("soundBtn").innerHTML = soundOn ? ICONS.sound : ICONS.mute; if (master) master.gain.value = soundOn ? 1 : 0; if (!soundOn) stopVoice(); });
 
 // grown-ups gate: a multiplication sum on a number pad, then the YouTube corner
 let gateAns = 0, gateTyped = "";
@@ -474,10 +781,12 @@ $("pad").addEventListener("click", e => {
 press($("parentBtn"), openGate);
 press($("gateClose"), () => { $("gate").hidden = true; });
 press($("parentsClose"), () => { $("parents").hidden = true; });
-$("ytLink").href = CHANNEL_URL;
+press($("creditsBtn"), () => { sfx.tap(); $("credits").hidden = false; });
+press($("creditsClose"), () => { $("credits").hidden = true; });
+$("ytLink").href = CHANNEL_URL; $("albumLink").href = ALBUM_URL;
 
 // preload the pictures, then wake the play button
-Promise.all(["sprout", "logo", ...CAST.map(c => c.id)].map(n => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = `assets/${n}.webp`; })))
+Promise.all(["sprout", "logo", ...CAST.map(c => c.id), ...Object.values(POSES).flat().map(p => "pose_" + p)].map(n => new Promise(r => { const i = new Image(); i.onload = i.onerror = r; i.src = `assets/${n}.webp`; })))
   .then(() => { $("playBtn").disabled = false; });
 </script>
 </body>

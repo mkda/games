@@ -52,15 +52,15 @@ def synth(spk, text, gid):
 lines = {}
 for cid, short in CHARS:
     nm = {"OLLY": "Judge Olly", "SNAIL": "Snail"}.get(cid, short)
-    t1 = f"I'm {nm}!"; t2 = f"You found me! Hooray!"
+    t1 = f"I'm {nm}!"; t2 = "You found me!"
     synth(cid, t1, f"{cid.lower()}_name"); synth(cid, t2, f"{cid.lower()}_found")
     lines[f"{cid.lower()}_name"] = t1; lines[f"{cid.lower()}_found"] = t2
 NARR = {
  "narr_title": "Meadow Memory!",
- "narr_pick": "How many cards? Pick one!",
+ "narr_pick": "Which game? Pick one!",
  "narr_start": "Tap two cards. Can you find the friends who match?",
  "narr_try": "Try again!",
- "narr_win": "You found all the friends! Hooray!",
+ "narr_win": "You found all the friends!",
  "narr_again": "Let's play again!",
 }
 for gid, t in NARR.items(): synth("NARRATOR", t, gid); lines[gid] = t

@@ -32,3 +32,6 @@ for each character from `cast.json`. Re-run `python3 make_voices.py` on the Mac 
 - Channel link: `CHANNEL_URL` near the top of the script.
 - Story lines and scene order: the `play()` function, one block per place.
 - Sizes of the characters: the `SPR` table.
+
+## Music (22 Nov 2026)
+The LittleLeap Studios score (the "Little Leap" sound, 432 Hz episode cues) in `music/`: `morning` at the start line, `cheeky` once the race starts (kept low while Zippy naps), `fanfare` when Tomo breaks the ribbon, `goodnight` while counting strawberries. Mastered at -20 LUFS, streamed, and ducked under the voices. Made from `_studio/library/music/remix_v7/432/` on the Mac.

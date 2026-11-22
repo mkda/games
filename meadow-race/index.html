@@ -7,9 +7,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#bfe6f5">
 <title>The Big Meadow Race</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<!-- Fredoka (SIL Open Font License, fonts/OFL.txt), bundled so the game works offline and in the apps -->
+<style>
+  @font-face { font-family: "Fredoka"; font-weight: 500; font-display: swap; src: url("fonts/fredoka-500.woff2") format("woff2"); }
+  @font-face { font-family: "Fredoka"; font-weight: 600; font-display: swap; src: url("fonts/fredoka-600.woff2") format("woff2"); }
+  @font-face { font-family: "Fredoka"; font-weight: 700; font-display: swap; src: url("fonts/fredoka-700.woff2") format("woff2"); }
+</style>
 <style>
   /* One full-screen picture-book stage (canvas) with a few big round buttons on top.
      Colours come from the LittleLeap cast: Tomo's scarf red, Zippy's sneaker blue, Olly's whistle gold. */
@@ -253,7 +256,7 @@ function audio() {
     try {
       actx = new (window.AudioContext || window.webkitAudioContext)();
       master = actx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(actx.destination);
-      musicGain = actx.createGain(); musicGain.gain.value = 0.05; musicGain.connect(master);
+      musicGain = actx.createGain(); musicGain.gain.value = MUSIC_FULL; musicGain.connect(master);
     } catch (e) { return null; }
   }
   if (actx.state === "suspended") actx.resume();
@@ -286,25 +289,50 @@ const sfx = {
   win: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.22, { type: "triangle", vol: 0.14, at: i * 0.12 })),
   count: n => tone(523 * Math.pow(2, (n % 8) / 12 * 2), 0.18, { type: "triangle", vol: 0.15 }),
 };
-// a soft looping meadow tune (C major pentatonic), low under the narrator
-const TUNE = [72, 0, 76, 79, 76, 0, 74, 72, 69, 0, 72, 74, 76, 0, 74, 0,
-              72, 0, 76, 79, 81, 0, 79, 76, 74, 0, 76, 74, 72, 0, 0, 0];
-const BASS = [48, 55, 52, 55, 45, 52, 48, 55];
-let musicTimer = null, musicStep = 0, musicNext = 0;
-function startMusic() {
-  const a = audio(); if (!a || musicTimer) return;
-  musicNext = a.currentTime + 0.1;
-  musicTimer = setInterval(() => {
-    while (musicNext < a.currentTime + 0.3) {
-      const n = TUNE[musicStep % TUNE.length], at = musicNext - a.currentTime;
-      const hz = m => 440 * Math.pow(2, (m - 69) / 12);
-      if (n) tone(hz(n), 0.32, { type: "triangle", vol: 0.5, at, dest: musicGain });
-      if (musicStep % 4 === 0) tone(hz(BASS[(musicStep / 4) % BASS.length]), 0.6, { type: "sine", vol: 0.55, at, dest: musicGain });
-      musicStep++; musicNext += 0.27;
+/* ---------- music: the LittleLeap Studios score (episode cues from the "Little Leap" album sound, 432 Hz) ----------
+   Streamed from music/*.mp3 (not decoded into memory), mastered at -20 LUFS so it sits under the voices (-18 LUFS).
+   Each track runs through its own gain for crossfades, then musicGain (ducks under voices), then master (mute). */
+const MUSIC_FULL = 0.85, MUSIC_DUCK = 0.35;
+const tracks = {}; let curTrack = null;
+function track(name, loop = true) {
+  let t = tracks[name];
+  if (!t) {
+    const el = new Audio(`music/${name}.mp3`); el.preload = "auto"; el.loop = loop; el.setAttribute("playsinline", "");
+    t = tracks[name] = { name, el, gain: null };
+    const a = audio();
+    if (a && a.createMediaElementSource) {
+      try { t.gain = a.createGain(); t.gain.gain.value = 0; a.createMediaElementSource(el).connect(t.gain).connect(musicGain); }
+      catch (e) { t.gain = null; }
     }
-  }, 100);
+    if (!t.gain) el.volume = 0;
+  }
+  return t;
 }
-function musicLevel(v) { if (musicGain) musicGain.gain.setTargetAtTime(v, actx.currentTime, 0.4); }
+function fadeTrack(t, v, d) {
+  if (t.gain && actx) { const g = t.gain.gain, now = actx.currentTime; g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(v, now + d); }
+  else t.el.volume = v * MUSIC_FULL;
+}
+// iOS starts audio only inside a tap: touch every track once during the first tap (silent, then paused)
+function unlockMusic(list) {
+  audio();
+  for (const [n, loop] of list) { const t = track(n, loop); t.el.play().then(() => { if (curTrack !== n) t.el.pause(); }).catch(() => {}); }
+}
+function playMusic(name, { loop = true, fade = 1.2 } = {}) {
+  if (curTrack === name) return;
+  const old = curTrack && tracks[curTrack]; curTrack = name;
+  if (old) { fadeTrack(old, 0, fade); setTimeout(() => { if (curTrack !== old.name) old.el.pause(); }, fade * 1000 + 150); }
+  if (!name) return;
+  const t = track(name, loop); t.el.loop = loop;
+  try { t.el.currentTime = 0; } catch (e) {}
+  t.el.play().catch(() => {});
+  fadeTrack(t, 1, 0.5);
+}
+function playSting(name) {                                   // a short one-shot over the music (not a track change)
+  const t = track(name, false); try { t.el.currentTime = 0; } catch (e) {}
+  fadeTrack(t, 1, 0.01); t.el.play().catch(() => {});
+}
+function musicLevel(v) { if (musicGain) musicGain.gain.setTargetAtTime(v, actx.currentTime, 0.3); }
+let hush = false;   // Sunflower Hill: Zippy is napping, music stays low
 
 // Voices: the cast's own recordings. Lines marked EP01 come straight from the movie; the others were
 // made with the studio's Kokoro settings for each character (see voices/lines.json).
@@ -355,9 +383,9 @@ function stopVoice() { try { currentVoice?.stop(); } catch (e) {} currentVoice =
 function say(id) {
   const text = LINES[id] || id;
   return new Promise(res => {
-    let done = false; const fin = () => { if (!done) { done = true; speaking = false; musicLevel(0.05); res(); } };
+    let done = false; const fin = () => { if (!done) { done = true; speaking = false; musicLevel(hush ? 0.25 : MUSIC_FULL); res(); } };
     if (!soundOn) { setTimeout(fin, 500 + text.length * 45); return; }
-    stopVoice(); speaking = true; musicLevel(0.02);
+    stopVoice(); speaking = true; musicLevel(hush ? 0.18 : MUSIC_DUCK);
     const a = audio(), buf = voiceBuf[id];
     if (a && buf) {
       const src = a.createBufferSource(); src.buffer = buf; src.connect(master);
@@ -417,6 +445,7 @@ async function play() {
   ui("game");
   try {
     /* 1. Big Oak start line */
+    hush = false; playMusic("morning");
     await decodeVoices();
     await fadeTo("S14", gen);
     state.tomo = actor({ name: "tomo_stand", x: W * 0.2, y: TOMO_Y(), z: 2 });
@@ -429,7 +458,7 @@ async function play() {
     await say("olly_marks"); alive(gen);
     olly.name = "olly_whistle"; sfx.whistle(); olly.bounce = 1;
     await sleep(650); alive(gen);
-    say("olly_go");
+    say("olly_go"); playMusic("cheeky", { fade: 0.6 });
     await sleep(400); alive(gen);
     zippy.name = "zippy_run"; sfx.zoom();
     say("zippy_seeyou");
@@ -464,7 +493,7 @@ async function play() {
     /* 5. Sunflower Hill: Zippy is napping, tiptoe past */
     await fadeTo("S24", gen); state.tomo.x = -140; state.actors.push(state.tomo);
     const napper = actor({ name: "zippy_sleep", x: W * 0.7, y: H - 88, z: 0, zzz: true });
-    musicLevel(0.02);
+    hush = true; musicLevel(0.25);
     state.tomo.x = W * 0.12; state.tomo.name = "tomo_stand";
     await say("tomo_sleeping"); alive(gen);
     napper.bounce = 0.4;
@@ -474,7 +503,7 @@ async function play() {
     await walkUntil(W + 140, gen, { speed: 170, triggers: [
       { x: W * 0.78, run: () => say("tomo_dreams") },
     ] }); alive(gen);
-    state.quiet = false;
+    state.quiet = false; hush = false; musicLevel(MUSIC_FULL);
 
     /* 6. Rainbow Bridge: the finish line */
     await fadeTo("S40", gen); state.tomo.x = -140; state.actors.push(state.tomo);
@@ -489,7 +518,7 @@ async function play() {
     state.ribbon.broken = 0.01; sfx.ribbon();
     finishOlly.name = "olly_whistle"; sfx.whistle();
     state.tomo.name = "tomo_cheer"; state.tomo.bounce = 1;
-    confetti(); sfx.win();
+    confetti(); playMusic("fanfare", { loop: false, fade: 0.4 });
     await sleep(700); alive(gen);
     await say("olly_winner"); alive(gen);
     await say("narr_meadow"); alive(gen);
@@ -508,6 +537,7 @@ async function play() {
 
     /* 7. Count the strawberries together */
     state.summary = { shown: 0, n: state.collected };
+    playMusic("goodnight", { fade: 2.5 });
     await say("narr_count"); alive(gen);
     for (let i = 0; i < state.collected; i++) {
       state.summary.shown = i + 1; sfx.count(i);
@@ -753,13 +783,13 @@ function ui(mode) {
 function toTitle() {
   state.gen++; state.mode = "title"; state.walk = null; state.tapTarget = null; state.summary = null;
   state.bg = "S03"; state.actors = []; state.berries = []; state.fx = []; state.ribbon = null; state.tomo = null; state.fade = 0;
-  stopVoice();
+  stopVoice(); playMusic(null);
   ui("title");
 }
 const press = (el, fn) => el.addEventListener("click", e => { e.preventDefault(); fn(); });
 // iOS only lets a page talk after a tap, so wake the narrator inside the tap itself
 function unlockVoice() { if ("speechSynthesis" in window && soundOn) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } }
-press($("playBtn"), () => { audio(); unlockVoice(); startMusic(); sfx.tap(); play(); });
+press($("playBtn"), () => { unlockMusic([["morning", true], ["cheeky", true], ["fanfare", false], ["goodnight", true]]); unlockVoice(); sfx.tap(); play(); });
 press($("againBtn"), () => { unlockVoice(); sfx.tap(); play(); });
 press($("homeBtn"), () => { sfx.tap(); toTitle(); });
 press($("soundBtn"), () => {
