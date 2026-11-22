@@ -25,7 +25,7 @@ Fallbacks if the name is taken: "Meadow Memory: LittleLeap" (25) · "Meadow Memo
 Find the matching Meadow friends! A gentle picture-pairs game for ages 3–7.   (74)
 
 **Apple promotional text (max 170):**
-Match the Meadow friends and hear each one say their name! 14 gentle levels, no ads, no sign-in. Music from our album Little Leap: distrokid.com/hyperfollow/mkda/little-leap   (≈169)
+Match the Meadow friends and hear each say their name! 14 gentle levels, no ads, no sign-in. Music from our album Little Leap: distrokid.com/hyperfollow/mkda/little-leap   (169)
 
 **Full description (Apple and Google, max 4000):**
 
