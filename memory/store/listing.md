@@ -113,20 +113,24 @@ memory,matching,pairs,kids,toddler,preschool,animals,cards,concentration,brain,l
   2. Then apply for production access.
   3. Then publish to production.
 
-## Status (22 Nov 2026, evening)
-**Apple**
-- App record created: Meadow Memory, Apple ID 6838015240, SKU meadow-memory-ios-001.
-- Build 1.0.0 (1) uploaded from the Mac.
-- Filled in: subtitle; category Games (Family, Puzzle) and Education; content rights "no third-party content"; age rating 4+ with Made for Kids, 5 and under.
-- App Privacy: policy URL and "Data Not Collected". Still needs the Publish button.
-- Price free; availability set.
-- Version page has the texts, URLs, copyright, manual release and review notes.
-- Still open:
-  - the contact phone number (owner);
-  - the screenshots;
-  - choosing the build once it has finished processing;
-  - publishing the App Privacy answers and submitting for review (owner's go).
+## Status (22 Nov 2026, 18:40)
+**Apple: ready to submit**
+- App record: Meadow Memory, Apple ID 6838015240.
+- Build 1.0.0 (1) attached.
+- Store page: texts, album link as the marketing URL, 6 iPhone 6.3" and 6 iPad 13" screenshots.
+- Age rating 4+, Made for Kids, 5 and under.
+- Price free; available in 174 countries, not China mainland.
+- Manual release; review contact and notes filled in.
+- App Privacy: "Data Not Collected" is filled in but not published yet. Publishing it and Add for Review → Submit wait for the owner's go.
+- Account-level Digital Services Act trader status: already declared.
+- Vietnam: games there need a local game licence. Open decision: remove Vietnam from availability or keep it.
 
-**Google**
-- The .aab is built on the Mac: _studio/apps/games/apps/meadow-memory/release/MeadowMemory-1.0.0-1.aab.
-- Creating the app in the Play Console waits for the owner's OK on Google's two declarations.
+**Google Play: blocked by the account setup (owner only)**
+- The MKDA developer account must finish four steps before "Create app" is enabled:
+  - verify identity (official ID document);
+  - declare trader status;
+  - verify access to a real Android device (Play Console app);
+  - verify the contact phone number.
+- The .aab is ready on the Mac: _studio/apps/games/apps/meadow-memory/release/MeadowMemory-1.0.0-1.aab.
+- Store graphics and texts are ready in this folder.
+- Upload note: the browser upload tool can't read the Mac's files, and the .aab is 11.7 MB. Upload it via drag-and-drop by the owner, or from GitHub Pages by page script, as was done for the Apple screenshots.
