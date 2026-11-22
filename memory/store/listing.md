@@ -114,18 +114,18 @@ memory,matching,pairs,kids,toddler,preschool,animals,cards,concentration,brain,l
   3. Then publish to production.
 
 ## Status (22 Nov 2026, 18:40)
-**Apple: ready to submit**
+**Apple: SUBMITTED for App Review on 22 Nov 2026, 19:23 (status: Waiting for Review). Manual release after approval.**
 - App record: Meadow Memory, Apple ID 6838015240.
 - Build 1.0.0 (1) attached.
 - Store page: texts, album link as the marketing URL, 6 iPhone 6.3" and 6 iPad 13" screenshots.
 - Age rating 4+, Made for Kids, 5 and under.
 - Price free; available in 174 countries, not China mainland.
 - Manual release; review contact and notes filled in.
-- App Privacy: "Data Not Collected" is filled in but not published yet. Publishing it and Add for Review → Submit wait for the owner's go.
+- App Privacy: "Data Not Collected" published.
 - Account-level Digital Services Act trader status: already declared.
-- Vietnam: games there need a local game licence. Open decision: remove Vietnam from availability or keep it.
+- Vietnam removed from availability (game licence rule), so the app is in 173 countries; China mainland was already excluded.
 
-**Google Play: blocked by the account setup (owner only)**
+**Google Play: blocked by the account setup (owner only; owner continues 23 Nov)**
 - The MKDA developer account must finish four steps before "Create app" is enabled:
   - verify identity (official ID document);
   - declare trader status;
