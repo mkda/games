@@ -101,7 +101,7 @@
   .lvl .lbl small { font-size: clamp(12px, 1.8vmin, 15px); font-weight: 500; opacity: .8; }
   .lvl .meter { display: flex; gap: 3px; }
   .lvl .meter s { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ink); background: transparent; }
-  .lvl .won { position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); background: var(--cream); border: 3px solid var(--ink);
+  .lvl .won { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--cream); border: 3px solid var(--ink);
               border-radius: 14px; padding: 0 7px; color: #f2a516; font-size: 16px; line-height: 20px; -webkit-text-stroke: 1px var(--ink); white-space: nowrap; }
   .lvl .tray.many { gap: 2px; } .lvl .tray.many i { width: clamp(7px, 1.4vmin, 12px); border-width: 1.5px; border-radius: 2px; }
   .lvl .meter s.on { background: var(--scarf); }
@@ -138,6 +138,7 @@
   #celebNext.go .ring circle { animation: ringGo var(--wait, 5s) linear forwards; }
   @keyframes ringGo { to { stroke-dashoffset: 0 } }
   @keyframes starPop { to { transform: scale(1) } }
+  @media (prefers-reduced-motion: reduce) { #celebStars i { transform: none; } }
   @keyframes spin { to { transform: rotate(360deg) } }
   .lvl:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(90,59,38,.35); }
   .lvl.next { animation: pulse 1.4s ease-in-out infinite; box-shadow: 0 0 0 6px #ffd84d, 0 7px 0 rgba(90,59,38,.35); }
