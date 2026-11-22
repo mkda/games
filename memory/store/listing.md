@@ -83,7 +83,7 @@ memory,matching,pairs,kids,toddler,preschool,animals,cards,concentration,brain,l
 - Marketing URL: https://distrokid.com/hyperfollow/mkda/little-leap (album; owner rule). Alternative: the web version.
 - Privacy policy URL: https://mkda.github.io/games/memory/privacy.html
 - Copyright: © 2026 LittleLeap Studios
-- Price: Free. Availability: all countries.
+- Price: Free. Availability: 174 countries, all except China mainland (China now requires an AI-generated-content (AIGC) filing and a security assessment).
 - Screenshots:
   - iPhone 6.9": `screenshots/iphone-6.9-*.png` (2796×1290, landscape)
   - iPad 13": `screenshots/ipad-13-*.png` (2732×2048)
@@ -112,3 +112,21 @@ memory,matching,pairs,kids,toddler,preschool,animals,cards,concentration,brain,l
   1. Closed testing with at least 12 testers, opted in for 14 days in a row.
   2. Then apply for production access.
   3. Then publish to production.
+
+## Status (22 Nov 2026, evening)
+**Apple**
+- App record created: Meadow Memory, Apple ID 6838015240, SKU meadow-memory-ios-001.
+- Build 1.0.0 (1) uploaded from the Mac.
+- Filled in: subtitle; category Games (Family, Puzzle) and Education; content rights "no third-party content"; age rating 4+ with Made for Kids, 5 and under.
+- App Privacy: policy URL and "Data Not Collected". Still needs the Publish button.
+- Price free; availability set.
+- Version page has the texts, URLs, copyright, manual release and review notes.
+- Still open:
+  - the contact phone number (owner);
+  - the screenshots;
+  - choosing the build once it has finished processing;
+  - publishing the App Privacy answers and submitting for review (owner's go).
+
+**Google**
+- The .aab is built on the Mac: _studio/apps/games/apps/meadow-memory/release/MeadowMemory-1.0.0-1.aab.
+- Creating the app in the Play Console waits for the owner's OK on Google's two declarations.
