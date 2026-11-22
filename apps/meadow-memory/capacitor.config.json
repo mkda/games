@@ -1,0 +1,8 @@
+{
+  "appId": "com.littleleapstudios.meadowmemory",
+  "appName": "Meadow Memory",
+  "webDir": "www",
+  "backgroundColor": "#fff8ec",
+  "ios": { "contentInset": "never", "scrollEnabled": false, "limitsNavigationsToAppBoundDomains": false },
+  "android": { "backgroundColor": "#fff8ec" }
+}

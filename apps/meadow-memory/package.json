@@ -1,0 +1,20 @@
+{
+  "name": "meadow-memory-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Meadow Memory as an iOS and Android app (Capacitor wrapper around ../../memory)",
+  "scripts": {
+    "www": "node prepare-www.js",
+    "sync": "node prepare-www.js && npx cap sync",
+    "assets": "npx capacitor-assets generate --iconBackgroundColor '#9cc76e' --splashBackgroundColor '#fff8ec' --splashBackgroundColorDark '#2a211b'"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/ios": "8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.6.0"
+  }
+}
