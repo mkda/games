@@ -134,3 +134,9 @@ memory,matching,pairs,kids,toddler,preschool,animals,cards,concentration,brain,l
 - The .aab is ready on the Mac: _studio/apps/games/apps/meadow-memory/release/MeadowMemory-1.0.0-1.aab.
 - Store graphics and texts are ready in this folder.
 - Upload note: the browser upload tool can't read the Mac's files, and the .aab is 11.7 MB. Upload it via drag-and-drop by the owner, or from GitHub Pages by page script, as was done for the Apple screenshots.
+
+### 24 Nov 2026
+- Apple's automated Kids-category request (Guideline 1.3) arrived at 11:23. It asked four questions: third-party analytics, advertising, data sharing, other data collection.
+- Replied at 12:27: no to all four; no network calls; links only behind the parental gate; matches "Data Not Collected".
+- Resubmitted at 12:28; status: Waiting for Review.
+- App Compliance check: the China mainland items (security assessment, AIGC filing) are not needed while China stays excluded. EU DSA trader is declared. Vietnam licence is no longer listed. Medical device declaration is not applicable.
