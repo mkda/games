@@ -142,4 +142,4 @@ memory,matching,pairs,kids,toddler,preschool,animals,cards,concentration,brain,l
 - App Compliance check: the China mainland items (security assessment, AIGC filing) are not needed while China stays excluded. EU DSA trader is declared. Vietnam licence is no longer listed. Medical device declaration is not applicable.
 - New app icon chosen by the owner: Zippy's face on warm cream (#FFF0D6). Web icons, maskable icon and app icon sources replaced.
 - Build 1.0.0 (2) built on the Mac and uploaded to App Store Connect at 12:36. Android bundle rebuilt: release/MeadowMemory-1.0.0-2.aab (use this one for Google Play).
-- Next: once build 2 finishes processing, swap it into the version under review and resubmit.
+- 12:47: removed 1.0.0 from review, replaced build 1 with build 2 (new icon), resubmitted. Status: Waiting for Review, build 2. Release stays manual.
