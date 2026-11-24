@@ -1,6 +1,6 @@
 # Meadow Memory: store listings (22 Nov 2026)
 
-App id (both stores): `com.littleleapstudios.meadowmemory` · Version 1.0.0 (build 1)
+App id (both stores): `com.littleleapstudios.meadowmemory` · Version 1.0.0 (build 2; build 1 had the old icon)
 Developer / seller name: LittleLeap Studios (as set in each developer account)
 
 Links used in every listing:
@@ -140,3 +140,6 @@ memory,matching,pairs,kids,toddler,preschool,animals,cards,concentration,brain,l
 - Replied at 12:27: no to all four; no network calls; links only behind the parental gate; matches "Data Not Collected".
 - Resubmitted at 12:28; status: Waiting for Review.
 - App Compliance check: the China mainland items (security assessment, AIGC filing) are not needed while China stays excluded. EU DSA trader is declared. Vietnam licence is no longer listed. Medical device declaration is not applicable.
+- New app icon chosen by the owner: Zippy's face on warm cream (#FFF0D6). Web icons, maskable icon and app icon sources replaced.
+- Build 1.0.0 (2) built on the Mac and uploaded to App Store Connect at 12:36. Android bundle rebuilt: release/MeadowMemory-1.0.0-2.aab (use this one for Google Play).
+- Next: once build 2 finishes processing, swap it into the version under review and resubmit.
