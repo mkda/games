@@ -6,7 +6,7 @@
   "scripts": {
     "www": "node prepare-www.js",
     "sync": "node prepare-www.js && npx cap sync",
-    "assets": "npx capacitor-assets generate --iconBackgroundColor '#9cc76e' --splashBackgroundColor '#fff8ec' --splashBackgroundColorDark '#2a211b'"
+    "assets": "npx capacitor-assets generate --iconBackgroundColor '#fff0d6' --splashBackgroundColor '#fff8ec' --splashBackgroundColorDark '#2a211b'"
   },
   "dependencies": {
     "@capacitor/android": "8.6.0",

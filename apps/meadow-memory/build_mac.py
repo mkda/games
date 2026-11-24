@@ -23,7 +23,7 @@ REL = os.path.join(APP, "release")
 KEYS = os.path.join(HOME, ".littleleap-keys")
 KS = os.path.join(KEYS, "meadow-memory-upload.jks")
 APP_ID = "com.littleleapstudios.meadowmemory"
-VERSION, BUILD = "1.0.0", 1
+VERSION, BUILD = "1.0.0", 2
 JAVA_HOME = "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
 ENV = dict(os.environ, PATH=f"/opt/homebrew/bin:/opt/homebrew/sbin:{JAVA_HOME}/bin:/usr/bin:/bin:/usr/sbin:/sbin",
            JAVA_HOME=JAVA_HOME, ANDROID_HOME=os.path.join(HOME, "Library", "Android", "sdk"),
