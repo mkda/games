@@ -6,7 +6,7 @@ We release one polished game at a time.
 | Game | Based on | Folder |
 |---|---|---|
 | The Big Meadow Race | EP01 Zippy and Tomo: The Big Meadow Race | [`meadow-race/`](meadow-race/) |
-| Meadow Memory | The whole cast, each saying their name | [`memory/`](memory/) |
+| Meadow Memory | The whole cast, each saying their name; 1 player or 2 players taking turns on one tablet | [`memory/`](memory/) |
 
 Open `index.html` at the top of the repo to see the collection page, which links to every game.
 
