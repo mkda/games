@@ -148,6 +148,31 @@
               font-weight: 700; font-size: 19px; display: grid; place-items: center; }
   .lvl .badge { position: absolute; right: -16px; top: -14px; height: 30%; filter: drop-shadow(0 2px 1px rgba(0,0,0,.25)); }
 
+  /* two players on one tablet: pick 1 or 2 on the level path; in a 2-player game Zippy and Tomo badges show whose turn it is */
+  #levels { gap: clamp(12px, 3vmin, 28px); }
+  #mode { display: flex; gap: 14px; justify-content: center; }
+  @media (max-height: 600px) { #levels { justify-content: flex-start; gap: 10px; } #mode button img { height: 34px; } #mode button { padding: 3px 14px 2px; } }
+  #mode button { display: flex; align-items: flex-end; gap: 2px; border: 5px solid var(--ink); background: var(--cream); border-radius: 40px;
+                 padding: 6px 18px 4px; cursor: pointer; box-shadow: 0 6px 0 rgba(90,59,38,.35); font: 700 clamp(16px, 2.6vmin, 22px) var(--font); color: var(--ink); }
+  #mode button img { height: clamp(40px, 7vmin, 60px); display: block; }
+  #mode button b { margin: 0 0 8px 8px; }
+  #mode button.on { background: #ffd84d; box-shadow: 0 0 0 5px var(--cream), 0 6px 0 rgba(90,59,38,.35); }
+  #mode button:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(90,59,38,.35); }
+  #players { display: flex; gap: 10px; }
+  .pl { position: relative; display: flex; align-items: center; gap: 6px; background: var(--cream); border: 4px solid var(--ink); border-radius: 30px;
+        padding: 2px 14px 2px 4px; font-weight: 700; font-size: clamp(17px, 2.8vmin, 24px); box-shadow: 0 4px 0 rgba(90,59,38,.3);
+        opacity: .55; transform: scale(.9); transition: transform .25s cubic-bezier(.3,1.6,.6,1), opacity .25s, background .25s; }
+  .pl img { width: clamp(36px, 6vmin, 52px); height: clamp(36px, 6vmin, 52px); display: block; border-radius: 50%; object-fit: cover; object-position: 50% 12%;
+            background: #fff; border: 3px solid var(--ink); margin: 2px 0; }
+  .pl b { min-width: 1.1em; text-align: center; }
+  .pl.turn { opacity: 1; transform: scale(1.08); background: var(--pc); box-shadow: 0 0 0 4px var(--cream), 0 0 0 8px var(--pc), 0 5px 0 rgba(90,59,38,.3); }
+  .pl.turn img { animation: bob 1s ease-in-out infinite; }
+  #game.p2 #board { border-radius: 26px; box-shadow: 0 0 0 10px color-mix(in srgb, var(--pc, transparent) 45%, transparent); transition: box-shadow .3s; }
+  #celebScores { position: relative; display: flex; gap: 18px; }
+  #celebScores .pl { opacity: 1; transform: none; background: var(--cream); }
+  #celebScores .pl.top { background: #ffd84d; }
+  #celebScores .pl.top::before { content: "★"; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); color: #ffd84d; font-size: 26px; -webkit-text-stroke: 2px var(--ink); }
+
   /* board */
   #board { display: grid; gap: var(--gap, 12px); }
   .card { position: relative; width: var(--cw); height: var(--ch); perspective: 900px; cursor: pointer; border: none; padding: 0; background: none; }
@@ -225,11 +250,16 @@
 </section>
 
 <section class="screen" id="levels" hidden>
+  <div id="mode" role="group" aria-label="How many players">
+    <button id="mode1" class="on" aria-label="One player" aria-pressed="true"><img src="assets/zippy.webp" alt=""><b>1</b></button>
+    <button id="mode2" aria-label="Two players, taking turns" aria-pressed="false"><img src="assets/zippy.webp" alt=""><img src="assets/tomo.webp" alt=""><b>2</b></button>
+  </div>
   <div class="row" id="path"></div>
 </section>
 
 <section class="screen" id="game" hidden>
-  <div id="hud"><div id="levelTag"></div><div id="tries" aria-live="polite"><span class="paws"></span><b id="triesN">0</b></div></div>
+  <div id="hud"><div id="levelTag"></div><div id="tries" aria-live="polite"><span class="paws"></span><b id="triesN">0</b></div>
+    <div id="players" hidden aria-live="polite"></div></div>
   <div id="board"></div>
 </section>
 
@@ -251,6 +281,7 @@
   <h2 id="celebTitle"></h2>
   <div id="celebStars" aria-hidden="true"><i>★</i><i>★</i><i>★</i></div>
   <div id="celebTries"></div>
+  <div id="celebScores" hidden></div>
   <button class="big" id="celebNext" aria-label="Next level">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h11.2l-4.6-4.6L13 6l7 7-7 7-1.4-1.4 4.6-4.6H5z" fill="#fff" transform="translate(0 -1)"/></svg>
     <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48"/></svg>
@@ -542,6 +573,22 @@ const POSES = {
 
 /* ---------- the game ---------- */
 let level = 0, first = null, lock = false, found = 0, misses = 0, gen = 0, cleared = -1;
+// Two players on one tablet: Zippy's player starts, a match earns another go, a miss passes the turn to Tomo's player.
+const PLAYERS = [{ id: "zippy", name: "Zippy", color: "#2F80ED", face: "50% 30%" }, { id: "tomo", name: "Tomo", color: "#D94A3D", face: "50% 15%" }];
+let players = 1, turn = 0, score = [0, 0];
+function setPlayers(n) {
+  players = n;
+  [1, 2].forEach(k => { const b = $("mode" + k); b.classList.toggle("on", k === n); b.setAttribute("aria-pressed", k === n); });
+}
+const badge = (p, n, cls = "") => `<span class="pl ${cls}" style="--pc:${tint(p.color, .35)}" aria-label="${p.name}: ${n} pairs"><img src="assets/${p.id}.webp" alt="" style="object-position:${p.face}"><b>${n}</b></span>`;
+function showPlayers() {
+  $("players").innerHTML = PLAYERS.map((p, i) => badge(p, score[i], i === turn ? "turn" : "")).join("");
+  $("game").style.setProperty("--pc", PLAYERS[turn].color);
+}
+function nextTurn() {
+  turn = 1 - turn; showPlayers();
+  tone(PLAYERS[turn].id === "zippy" ? 660 : 523, 0.16, { type: "triangle", vol: 0.1, to: PLAYERS[turn].id === "zippy" ? 880 : 698 });
+}
 const pairsNow = () => LEVELS[level].pairs;
 // Rotation: every friend and every pose drawing gets its turn. Each board takes the friends that have been on the
 // fewest boards so far (ties in random order), so over a few games all 18 friends appear before anyone repeats much.
@@ -611,8 +658,10 @@ function layout() {
 addEventListener("resize", () => { if (!$("game").hidden) layout(); });
 
 async function deal() {
-  gen++; first = null; lock = false; found = 0; misses = 0;
+  gen++; first = null; lock = false; found = 0; misses = 0; turn = 0; score = [0, 0];
   show("game");
+  $("game").classList.toggle("p2", players === 2); $("tries").hidden = players === 2; $("players").hidden = players === 1;
+  if (players === 2) showPlayers();
   playMusic("cheeky");
   const L = LEVELS[level];
   $("levelTag").textContent = `Level ${level + 1} · ${L.label}`; showTries();
@@ -657,6 +706,7 @@ $("board").addEventListener("click", async e => {
     a.classList.remove("sel"); card.classList.remove("sel");
     a.classList.add("done"); card.classList.add("done"); sfx.match(); sparkle(card); sparkle(a);
     found++; showTries();
+    if (players === 2) { score[turn]++; showPlayers(); }
     await say(id + "_found"); if (g !== gen) return;
     lock = false;
     if (found === pairsNow()) win(g);
@@ -667,9 +717,10 @@ $("board").addEventListener("click", async e => {
     sfx.miss();
     a.classList.add("nope"); card.classList.add("nope");
     misses++; showTries();
-    if (misses % 3 === 0) say("narr_try");
+    if (players === 1 && misses % 3 === 0) say("narr_try");
     await sleep(350); if (g !== gen) return;
     back(a); back(card);
+    if (players === 2) nextTurn();
     lock = false;
   }
 });
@@ -690,7 +741,7 @@ async function win(g) {
   document.querySelectorAll(".card").forEach(c => c.classList.add("dance"));
   cleared = Math.max(cleared, level);
   const L = LEVELS[level], tries = found + misses, st = starsFor(tries, L.pairs), last = level >= LEVELS.length - 1;
-  stars[level] = Math.max(stars[level] || 0, st);
+  if (players === 1) stars[level] = Math.max(stars[level] || 0, st);
   await sleep(900); if (g !== gen) return;
   // the celebration screen: a friend from this board dances, stars pop in, then the next level starts by itself
   const keys = [...document.querySelectorAll(".card")].map(c => c.querySelector(".pic img").getAttribute("src"));
@@ -698,12 +749,20 @@ async function win(g) {
   $("celebTitle").textContent = last ? "Memory Champion!" : `Level ${level + 1} done!`;
   $("celebStars").innerHTML = [1, 2, 3].map(i => `<i class="${i <= st ? "on" : ""}">★</i>`).join("");
   $("celebTries").innerHTML = `${PAW}<span>${tries} ${tries === 1 ? "try" : "tries"}</span>`;
+  // two players: no stars or tries, just both pair counts; the higher one (or both, when equal) gets a star
+  const two = players === 2, best = Math.max(...score);
+  $("celebStars").hidden = $("celebTries").hidden = two; $("celebScores").hidden = !two;
+  if (two) {
+    $("celebScores").innerHTML = PLAYERS.map((p, i) => badge(p, score[i], score[i] === best ? "top" : "")).join("");
+    if (score[0] === score[1]) $("celebTitle").textContent = "Great teamwork!";
+    else $("celebTitle").textContent = `Well played, ${PLAYERS[score[0] > score[1] ? 0 : 1].name} team!`;
+  }
   $("celebNext").setAttribute("aria-label", last ? "Choose a level" : "Next level");
   $("celebNext").classList.remove("go"); $("celebrate").hidden = false;
   confetti();
   const wait = last ? 0 : 5;
   if (wait) { $("celebNext").style.setProperty("--wait", wait + "s"); void $("celebNext").offsetWidth; $("celebNext").classList.add("go"); }
-  [1, 2, 3].slice(0, st).forEach(i => setTimeout(() => { if (g === gen) sfx.match(); }, 350 * i));
+  [1, 2, 3].slice(0, two ? 2 : st).forEach(i => setTimeout(() => { if (g === gen) sfx.match(); }, 350 * i));
   await say("narr_win"); if (g !== gen) return;
   if (!wait) return;                                          // last level: stay until the child taps
   await sleep(Math.max(0, wait * 1000 - 1600)); if (g !== gen) return;
@@ -757,6 +816,8 @@ const press = (el, fn) => el.addEventListener("click", e => { e.preventDefault()
 function toPath() { drawPath(); show("levels"); playMusic("morning"); }
 press($("playBtn"), async () => { unlockMusic([["morning", true], ["cheeky", true], ["tada", false]]); sfx.tap(); toPath(); await decodeVoices(); say("narr_pick"); });
 $("celebrate").addEventListener("click", e => { e.preventDefault(); sfx.tap(); nextFromCelebration(); });
+press($("mode1"), () => { sfx.tap(); setPlayers(1); });
+press($("mode2"), () => { sfx.tap(); setPlayers(2); });
 press($("againBtn"), () => { sfx.tap(); deal(); });
 press($("nextBtn"), () => { sfx.tap(); level = Math.min(level + 1, LEVELS.length - 1); deal(); });
 press($("moreBtn"), () => { sfx.tap(); gen++; toPath(); say("narr_pick"); });
